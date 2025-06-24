@@ -1,0 +1,3 @@
+../Core/Src/Oneshot125_Esc_Control.c:12:6:Calibration	16	static
+../Core/Src/Oneshot125_Esc_Control.c:29:6:escNormalOneshot125	24	static
+../Core/Src/Oneshot125_Esc_Control.c:56:6:Control4Motor	16	static

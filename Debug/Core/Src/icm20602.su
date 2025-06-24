@@ -1,0 +1,6 @@
+../Core/Src/icm20602.c:21:6:icm20602_init	8	static
+../Core/Src/icm20602.c:64:6:icm20602_readReg	24	static
+../Core/Src/icm20602.c:74:6:icm20602_writeReg	24	static
+../Core/Src/icm20602.c:83:6:get3AxisAccelData	32	static
+../Core/Src/icm20602.c:104:6:get3AxisGyroData	32	static
+../Core/Src/icm20602.c:125:6:icm20602CalculateAngle	48	static

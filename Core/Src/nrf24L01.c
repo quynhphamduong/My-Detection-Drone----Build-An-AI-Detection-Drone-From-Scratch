@@ -6,7 +6,7 @@
  */
 
 #include "nRF24L01.h"
-#include "main.h"
+
 
 
 void Chip_Select()
@@ -126,7 +126,6 @@ void TX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
 	nRF_WriteOneRegister(hspi,RF_SETUP, 0x7);
 	Set_CE_High();
 	HAL_Delay(2);
-
 }
 
 void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
@@ -150,19 +149,19 @@ uint8_t TX_Communication(SPI_HandleTypeDef *hspi,uint8_t *data)
 	WaitForIRQ();
 	nRF_SendCmd(hspi, FLUSH_TX);
 	uint8_t status=nRF_GetStatus(hspi);
-	if((status&(1<<4))!=0)
+	if((status&(1<<MAX_RT))!=0)
 	{
-		status|=((1<<4)|(1<<0));
+		status|=((1<<MAX_RT)|(1<<TX_FULL));
 		nRF_WriteOneRegister(hspi, STATUS,status);
-		return 1;
+		return STATUS_TX_ERROR;
 	}
 	else if((status&(1<<5))!=0)
 	{
-		status|=((1<<5)|(1<<0));
+		status|=((1<<TX_DS)|(1<<TX_FULL));
 		nRF_WriteOneRegister(hspi, STATUS,status);
-		return 2;
+		return STATUS_TX_OK;
 	}
-	return 0;
+	return STATUS_TX_NONDEFINE;
 }
 
 uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data)
@@ -170,14 +169,14 @@ uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data)
 	Set_CE_High();
 //	WaitForIRQ();
 	uint8_t status=nRF_GetStatus(hspi);
-	if((status&(1<<6))!=0)
+	if((status&(1<<RX_DR))!=0)
 	{
 		nRF_WriteOneRegister(hspi, STATUS,(1<<6));
 		nRF_RX_Payload(hspi, rx_data, 8);
-		return 1;
+		return STATUS_RX_OK;
 	}
 	nRF_SendCmd(hspi, FLUSH_RX);
-	return 0;
+	return STATUS_RX_ERROR;
 }
 
 void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data)

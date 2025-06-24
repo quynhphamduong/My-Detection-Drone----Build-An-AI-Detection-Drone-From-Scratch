@@ -12,17 +12,18 @@
 extern "C" {
 #endif
 #include "main.h"
+#include "cmsis_os.h"
 
-#define TWO_MODOULES 0
+#define USING_RTOS 0
 
 #define CHIP_SELECT_GPIO GPIOA
 #define CHIP_SELECT_PIN GPIO_PIN_4
 
-#define CE_GPIO GPIOC
-#define CE_PIN GPIO_PIN_4
+#define CE_GPIO GPIOB
+#define CE_PIN GPIO_PIN_0
 
-#define IRQ_GPIO GPIOC
-#define IRQ_PIN GPIO_PIN_5
+#define IRQ_GPIO GPIOB
+#define IRQ_PIN GPIO_PIN_1
 
 #define NRF_SPI_TIMEOUT 100
 
@@ -51,22 +52,63 @@ typedef enum
 	//Receive address data pipe 4. Only LSB.MSBytes will be equal to RX_ADDR_P1[39:8]
 	//Receive address data pipe 5. Only LSB.MSBytes will be equal to RX_ADDR_P1[39:8]
 	 TX_ADDR,
-	//Transmit address. Used for a PTX device only. (LSByte is written first) Set RX_ADDR_P0 equal to this address to handle automatic acknowledge if this is a PTX device with Enhanced ShockBurstâ„¢ enabled
+	//Transmit address. Used for a PTX device only. (LSByte is written first) Set RX_ADDR_P0 equal to this address to handle automatic acknowledge if this is a PTX device with Enhanced ShockBurst™ enabled
 	 RX_PW_P0,
 	 RX_PW_P1,
 	 RX_PW_P2,
 	 RX_PW_P3,
 	 RX_PW_P4,
 	 RX_PW_P5,
-	//Number of bytes in RX payload in data pipe 0 (1 to 32 bytes). 0 Pipe not used 1 = 1 byteâ€¦ 32 = 32 bytes (5:0)
-	//Number of bytes in RX payload in data pipe 1 (1 to 32 bytes). 0 Pipe not used 1 = 1 byteâ€¦ 32 = 32 bytes (5:0)
-	//Number of bytes in RX payload in data pipe 2 (1 to 32 bytes). 0 Pipe not used 1 = 1 byteâ€¦ 32 = 32 bytes (5:0)
-	//Number of bytes in RX payload in data pipe 3 (1 to 32 bytes). 0 Pipe not used 1 = 1 byteâ€¦ 32 = 32 bytes (5:0)
-	//Number of bytes in RX payload in data pipe 4 (1 to 32 bytes). 0 Pipe not used 1 = 1 byteâ€¦ 32 = 32 bytes (5:0)
-	//Number of bytes in RX payload in data pipe 5 (1 to 32 bytes). 0 Pipe not used 1 = 1 byteâ€¦ 32 = 32 bytes (5:0)
+	//Number of bytes in RX payload in data pipe 0 (1 to 32 bytes). 0 Pipe not used 1 = 1 byte… 32 = 32 bytes (5:0)
+	//Number of bytes in RX payload in data pipe 1 (1 to 32 bytes). 0 Pipe not used 1 = 1 byte… 32 = 32 bytes (5:0)
+	//Number of bytes in RX payload in data pipe 2 (1 to 32 bytes). 0 Pipe not used 1 = 1 byte… 32 = 32 bytes (5:0)
+	//Number of bytes in RX payload in data pipe 3 (1 to 32 bytes). 0 Pipe not used 1 = 1 byte… 32 = 32 bytes (5:0)
+	//Number of bytes in RX payload in data pipe 4 (1 to 32 bytes). 0 Pipe not used 1 = 1 byte… 32 = 32 bytes (5:0)
+	//Number of bytes in RX payload in data pipe 5 (1 to 32 bytes). 0 Pipe not used 1 = 1 byte… 32 = 32 bytes (5:0)
 	 FIFO_STATUS,
 
 }NRF24L01_REGISTER;
+
+typedef enum
+{
+	PRIM_RX,
+	PWR_UP,
+	CRCO,
+	EN_CRC,
+	MASK_MAX_RT,
+	MASK_TX_DS,
+	MASK_RX_DR,
+}CONFIG_BIT;
+
+typedef enum
+{
+	TX_FULL,
+	RX_P_NO,
+	RX_P_NO1,
+	RX_P_NO2,
+	MAX_RT,
+	TX_DS,
+	RX_DR,
+}STATUS_BIT;
+
+enum
+{
+	STATUS_TX_NONDEFINE,
+	STATUS_TX_ERROR,
+	STATUS_TX_OK,
+	STATUS_RX_ERROR=0,
+	STATUS_RX_OK,
+};
+
+typedef enum
+{
+	FIFO_RX_EMPTY,
+	FIFO_RX_FULL,
+	FIFO_TX_EMPTY=4,
+	FIFO_TX_FULL,
+	FIFO_TX_REUSE
+}FIFO_STATUS_BIT;
+
 
 void Chip_Select();
 void Chip_Deselect();
