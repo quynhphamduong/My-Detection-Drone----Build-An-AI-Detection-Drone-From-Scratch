@@ -1,4 +1,4 @@
-Core/Src/nRF24L01.o: ../Core/Src/nRF24L01.c ../Core/Inc/nRF24L01.h \
+Core/Src/nrf24L01.o: ../Core/Src/nrf24L01.c ../Core/Inc/nRF24L01.h \
  ../Core/Inc/main.h ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \

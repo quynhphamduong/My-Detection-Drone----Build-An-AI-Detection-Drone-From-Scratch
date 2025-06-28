@@ -96,7 +96,8 @@ enum
 	STATUS_TX_NONDEFINE,
 	STATUS_TX_ERROR,
 	STATUS_TX_OK,
-	STATUS_RX_ERROR=0,
+	STATUS_RX_NONDEFINE=0,
+	STATUS_RX_ERROR,
 	STATUS_RX_OK,
 };
 
@@ -109,6 +110,14 @@ typedef enum
 	FIFO_TX_REUSE
 }FIFO_STATUS_BIT;
 
+typedef enum
+{
+	MODE_TX,
+	MODE_RX
+}NRF_MODE;
+
+
+extern NRF_MODE nrfmode;
 
 void Chip_Select();
 void Chip_Deselect();
@@ -127,6 +136,12 @@ void nRF_RX_Payload(SPI_HandleTypeDef *hspi,uint8_t *rx_data, uint16_t size);
 
 void TX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi);
 void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi);
+void TX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi);
+void RX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi);
+void Select_Tx_Mode(SPI_HandleTypeDef *hspi);
+void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi);
+void Select_Rx_Mode(SPI_HandleTypeDef *hspi);
+void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi);
 
 uint8_t TX_Communication(SPI_HandleTypeDef *hspi,uint8_t *data);
 uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data);

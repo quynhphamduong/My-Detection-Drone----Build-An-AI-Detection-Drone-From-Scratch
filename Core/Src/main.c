@@ -56,6 +56,7 @@ TIM_HandleTypeDef htim3;
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 uint8_t spi_rx[32];
+uint8_t spi_tx[32];
 uint8_t timer3_flag;
 
 Motor_speed_Typedef speed;
@@ -126,6 +127,7 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
   float sample=powf(10,-3);
   pidControllersInit(&yaw, 20, 15, 5,0.1,sample,0.1,-0.1);
   pidControllersInit(&yaw_rate, 100, 50,10, 0.1,sample,1500,-1500);
@@ -138,8 +140,12 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
-  Calibration(&htim2);
+//  Calibration(&htim2);
+  nRF_WriteOneRegister(&hspi1, RX_PW_P1, 8);
   RX_Enhanced_ShockBurst_Config(&hspi1);
+  Set_CE_Low();
+  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 3);
+  Set_CE_High();
   HAL_TIM_Base_Start_IT(&htim3);
   /* USER CODE END 2 */
 
@@ -167,7 +173,7 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   xTaskCreate(ESC_Task, "ESC", 128,NULL,1, &ESC_Handle);
-  xTaskCreate(NRF_Task, "NRF", 128, NULL, 2, &NRF_Handle);
+  xTaskCreate(NRF_Task, "NRF", 256, NULL, 2, &NRF_Handle);
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -254,7 +260,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -390,9 +396,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
@@ -400,6 +413,26 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PB1 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -466,12 +499,14 @@ void NRF_Task(void *argument)
 
 	while(1)
 	{
+		sprintf((char*)spi_tx,"87654321");
 		if(RX_Communication(&hspi1, spi_rx)==STATUS_RX_OK)
 		{
-			/*
-			 * get reference
-			 */
-			Calculate_Reference(&calculation, &control);
+			Select_Tx_Mode_RTOS(&hspi1);
+		}
+		if (TX_Communication(&hspi1,spi_tx)==STATUS_TX_OK)
+		{
+			Select_Rx_Mode_RTOS(&hspi1);
 		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}

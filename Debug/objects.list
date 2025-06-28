@@ -4,7 +4,7 @@
 "./Core/Src/freertos.o"
 "./Core/Src/icm20602.o"
 "./Core/Src/main.o"
-"./Core/Src/nRF24L01.o"
+"./Core/Src/nrf24L01.o"
 "./Core/Src/stm32f4xx_hal_msp.o"
 "./Core/Src/stm32f4xx_hal_timebase_tim.o"
 "./Core/Src/stm32f4xx_it.o"

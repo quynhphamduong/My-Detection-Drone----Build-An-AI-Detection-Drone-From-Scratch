@@ -7,7 +7,7 @@
 
 #include "nRF24L01.h"
 
-
+NRF_MODE nrfmode;
 
 void Chip_Select()
 {
@@ -121,11 +121,45 @@ void nRF_RX_Payload(SPI_HandleTypeDef *hspi,uint8_t *rx_data, uint16_t size)
 void TX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
 {
 	uint8_t buff=0x0a;
+//	Set_CE_Low();
 	CONFIG_REG_Write(hspi, buff);
 	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
 	nRF_WriteOneRegister(hspi,RF_SETUP, 0x7);
 	Set_CE_High();
 	HAL_Delay(2);
+	nrfmode=MODE_TX;
+}
+
+void TX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff=0x0a;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
+	nRF_WriteOneRegister(hspi,RF_SETUP, 0x7);
+	Set_CE_High();
+	vTaskDelay(pdMS_TO_TICKS(2));
+	nrfmode=MODE_TX;
+}
+
+void Select_Tx_Mode(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff=0x0a;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	Set_CE_High();
+	HAL_Delay(2);
+	nrfmode=MODE_TX;
+}
+
+void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff=0x0a;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	Set_CE_High();
+	vTaskDelay(pdMS_TO_TICKS(2));
+	nrfmode=MODE_TX;
 }
 
 void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
@@ -139,44 +173,90 @@ void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
 	Set_CE_High();
 	HAL_Delay(2);
 	nRF_SendCmd(hspi, FLUSH_RX);
+	nrfmode=MODE_RX;
 
 }
 
+void Select_Rx_Mode(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff=0x0b;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	Set_CE_High();
+	HAL_Delay(2);
+	nRF_SendCmd(hspi, FLUSH_RX);
+	nrfmode=MODE_RX;
+}
+
+void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff=0x0b;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	Set_CE_High();
+	vTaskDelay(pdMS_TO_TICKS(2));
+	nRF_SendCmd(hspi, FLUSH_RX);
+	nrfmode=MODE_RX;
+}
+
+void RX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff=0xb;
+	CONFIG_REG_Write(hspi, buff);
+	nRF_WriteOneRegister(hspi, EN_RXADDR, 0x01);
+	nRF_WriteOneRegister(hspi, RX_PW_P0, 8);
+	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
+	nRF_WriteOneRegister(hspi,RF_SETUP, 0x7);
+	Set_CE_High();
+	vTaskDelay(pdMS_TO_TICKS(2));
+	nRF_SendCmd(hspi, FLUSH_RX);
+	nrfmode=MODE_RX;
+
+}
+
+
 uint8_t TX_Communication(SPI_HandleTypeDef *hspi,uint8_t *data)
 {
-	nRF_TX_Payload(hspi, data, 8);
-	Set_CE_High();
-	WaitForIRQ();
-	nRF_SendCmd(hspi, FLUSH_TX);
-	uint8_t status=nRF_GetStatus(hspi);
-	if((status&(1<<MAX_RT))!=0)
+	if(nrfmode==MODE_TX)
 	{
-		status|=((1<<MAX_RT)|(1<<TX_FULL));
-		nRF_WriteOneRegister(hspi, STATUS,status);
-		return STATUS_TX_ERROR;
-	}
-	else if((status&(1<<5))!=0)
-	{
-		status|=((1<<TX_DS)|(1<<TX_FULL));
-		nRF_WriteOneRegister(hspi, STATUS,status);
-		return STATUS_TX_OK;
+		nRF_TX_Payload(hspi, data, 8);
+		Set_CE_High();
+		WaitForIRQ();
+		nRF_SendCmd(hspi, FLUSH_TX);
+		uint8_t status=nRF_GetStatus(hspi);
+		if((status&(1<<MAX_RT))!=0)
+		{
+			status|=((1<<MAX_RT)|(1<<TX_FULL));
+			nRF_WriteOneRegister(hspi, STATUS,status);
+			return STATUS_TX_ERROR;
+		}
+		else if((status&(1<<5))!=0)
+		{
+			status|=((1<<TX_DS)|(1<<TX_FULL));
+			nRF_WriteOneRegister(hspi, STATUS,status);
+			return STATUS_TX_OK;
+		}
 	}
 	return STATUS_TX_NONDEFINE;
 }
 
 uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data)
 {
-	Set_CE_High();
-//	WaitForIRQ();
-	uint8_t status=nRF_GetStatus(hspi);
-	if((status&(1<<RX_DR))!=0)
+	if(nrfmode==MODE_RX)
 	{
-		nRF_WriteOneRegister(hspi, STATUS,(1<<6));
-		nRF_RX_Payload(hspi, rx_data, 8);
-		return STATUS_RX_OK;
+		Set_CE_High();
+		uint8_t status=nRF_GetStatus(hspi);
+		if((status&(1<<RX_DR))!=0)
+		{
+			nRF_WriteOneRegister(hspi, STATUS,(1<<6));
+			nRF_RX_Payload(hspi, rx_data, 8);
+			return STATUS_RX_OK;
+		}
+		nRF_SendCmd(hspi, FLUSH_RX);
+		return STATUS_RX_ERROR;
 	}
-	nRF_SendCmd(hspi, FLUSH_RX);
-	return STATUS_RX_ERROR;
+	return STATUS_TX_NONDEFINE;
+
 }
 
 void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data)
