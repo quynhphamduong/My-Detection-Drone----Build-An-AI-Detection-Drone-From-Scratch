@@ -498,14 +498,7 @@ void NRF_Task(void *argument)
 	while(1)
 	{
 		sprintf((char*)spi_tx,"87654321");
-		if(RX_Communication(&hspi1, spi_rx)==STATUS_RX_OK)
-		{
-			Select_Tx_Mode_RTOS(&hspi1);
-		}
-		if (TX_Communication(&hspi1,spi_tx)==STATUS_TX_OK)
-		{
-			Select_Rx_Mode_RTOS(&hspi1);
-		}
+		Two_Way_Communication_RTOS(&hspi1, spi_tx, spi_rx);
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }

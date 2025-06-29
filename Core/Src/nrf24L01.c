@@ -271,9 +271,7 @@ void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data)
 
 void EN_AA_Enhanced_Shockburst_Auto_Acknowledgement_Pipe_Num(SPI_HandleTypeDef *hspi,uint8_t pipe)
 {
-	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, EN_AA, pipe&0x3F);
-	Set_CE_High();
 }
 
 void RX_ADDR_P0_Write(SPI_HandleTypeDef *hspi,uint64_t data)
@@ -285,10 +283,7 @@ void RX_ADDR_P0_Write(SPI_HandleTypeDef *hspi,uint64_t data)
 		buff[i]=(uint8_t)((temp)&0xff);
 		temp=temp>>8;
 	}
-	Set_CE_Low();
 	nRF_WriteRegister(hspi, RX_ADDR_P0, buff, 5);
-	Set_CE_High();
-
 }
 
 void RX_ADDR_P1_Write(SPI_HandleTypeDef *hspi,uint64_t data)
@@ -300,9 +295,7 @@ void RX_ADDR_P1_Write(SPI_HandleTypeDef *hspi,uint64_t data)
 		buff[i]=(uint8_t)((temp)&0xff);
 		temp=temp>>8;
 	}
-	Set_CE_Low();
 	nRF_WriteRegister(hspi, RX_ADDR_P1, buff, 5);
-	Set_CE_High();
 }
 
 void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t data)
@@ -325,9 +318,7 @@ void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t dat
 	default:
 		return;
 	}
-	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, reg, data);
-	Set_CE_High();
 }
 
 void TX_ADDR_Write(SPI_HandleTypeDef *hspi,uint64_t data)
@@ -339,17 +330,38 @@ void TX_ADDR_Write(SPI_HandleTypeDef *hspi,uint64_t data)
 		buff[i]=(uint8_t)((temp)&0xff);
 		temp=temp>>8;
 	}
-	Set_CE_Low();
 	nRF_WriteRegister(hspi, TX_ADDR, buff, 5);
-	Set_CE_High();
 }
 
 void Enable_Data_Pipe(SPI_HandleTypeDef *hspi,uint8_t data)
 {
-	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, EN_RXADDR,data);
-	Set_CE_High();
 }
+
+void Two_Way_Communication(SPI_HandleTypeDef *hspi,uint8_t *spi_tx,uint8_t *spi_rx)
+{
+	if(RX_Communication(hspi, spi_rx)==STATUS_RX_OK)
+	{
+		Select_Tx_Mode(hspi);
+	}
+	if (TX_Communication(hspi,spi_tx)==STATUS_TX_OK)
+	{
+		Select_Rx_Mode(hspi);
+	}
+}
+
+void Two_Way_Communication_RTOS(SPI_HandleTypeDef *hspi,uint8_t *spi_tx,uint8_t *spi_rx)
+{
+	if(RX_Communication(hspi, spi_rx)==STATUS_RX_OK)
+	{
+		Select_Tx_Mode_RTOS(hspi);
+	}
+	if (TX_Communication(hspi,spi_tx)==STATUS_TX_OK)
+	{
+		Select_Rx_Mode_RTOS(hspi);
+	}
+}
+
 
 void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t data)
 {
@@ -377,7 +389,5 @@ void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_
 		default:
 			return;
 		}
-	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, reg, data);
-	Set_CE_High();
 }

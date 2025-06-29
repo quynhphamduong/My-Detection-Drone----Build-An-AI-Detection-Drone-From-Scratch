@@ -5,7 +5,7 @@
 ../Core/Src/main.c:342:13:MX_TIM3_Init	4
 ../Core/Src/main.c:387:13:MX_GPIO_Init	1
 ../Core/Src/main.c:440:6:ESC_Task	2
-../Core/Src/main.c:495:6:NRF_Task	3
-../Core/Src/main.c:522:6:StartDefaultTask	1
-../Core/Src/main.c:543:6:HAL_TIM_PeriodElapsedCallback	3
-../Core/Src/main.c:563:6:Error_Handler	1
+../Core/Src/main.c:495:6:NRF_Task	1
+../Core/Src/main.c:515:6:StartDefaultTask	1
+../Core/Src/main.c:536:6:HAL_TIM_PeriodElapsedCallback	3
+../Core/Src/main.c:556:6:Error_Handler	1

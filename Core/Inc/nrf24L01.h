@@ -155,6 +155,8 @@ void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi);
 
 uint8_t TX_Communication(SPI_HandleTypeDef *hspi,uint8_t *data);
 uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data);
+void Two_Way_Communication(SPI_HandleTypeDef *hspi,uint8_t *spi_tx,uint8_t *spi_rx);
+void Two_Way_Communication_RTOS(SPI_HandleTypeDef *hspi,uint8_t *spi_tx,uint8_t *spi_rx);
 
 
 void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data);
