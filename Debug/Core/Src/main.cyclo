@@ -3,7 +3,7 @@
 ../Core/Src/main.c:217:13:MX_I2C1_Init	2
 ../Core/Src/main.c:251:13:MX_SPI1_Init	2
 ../Core/Src/main.c:289:13:MX_GPIO_Init	1
-../Core/Src/main.c:353:6:NRF_Task	1
+../Core/Src/main.c:353:6:NRF_Task	3
 ../Core/Src/main.c:371:6:LCD_Task	1
 ../Core/Src/main.c:387:6:StartDefaultTask	1
 ../Core/Src/main.c:407:6:HAL_TIM_PeriodElapsedCallback	2

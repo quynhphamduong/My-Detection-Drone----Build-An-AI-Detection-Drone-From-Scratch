@@ -114,9 +114,9 @@ int main(void)
   nRF_ReadOneRegister(&hspi1, TX_ADDR, spi_check);
   TX_ADDR_Write(&hspi1, 0xC2C2C2C2C2);
   nRF_WriteOneRegister(&hspi1,RX_PW_P1, 8);
-  RX_Enhanced_ShockBurst_Config(&hspi1);
+  TX_Enhanced_ShockBurst_Config(&hspi1);
   Set_CE_Low();
-  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 1);
+  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 3);
   Set_CE_High();
 
   /* USER CODE END 2 */
@@ -356,14 +356,14 @@ void NRF_Task(void *argument)
 	while(1)
 	{
 		sprintf((char*)spi_tx,"12345678");
+		if(TX_Communication(&hspi1, spi_tx)==STATUS_TX_OK)
+		{
+			Select_Rx_Mode_RTOS(&hspi1);
+		}
 		if(RX_Communication(&hspi1, spi_rx)==STATUS_RX_OK)
 		{
-//			Select_Rx_Mode_RTOS(&hspi1);
+			Select_Tx_Mode_RTOS(&hspi1);
 		}
-//		if(RX_Communication(&hspi1, spi_rx)==STATUS_RX_OK)
-//		{
-//			Select_Tx_Mode_RTOS(&hspi1);
-//		}
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
