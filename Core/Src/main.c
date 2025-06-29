@@ -55,6 +55,7 @@ osThreadId defaultTaskHandle;
 uint8_t spi_tx[32];
 uint8_t spi_rx[32];
 uint8_t spi_check[50];
+uint8_t I;
 
 xTaskHandle LCD_Handle;
 xTaskHandle NRF_Handle;
@@ -109,16 +110,21 @@ int main(void)
   MX_SPI1_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  lcd_init(&hi2c1);
-  menu_init(&hi2c1);
-  nRF_ReadOneRegister(&hspi1, TX_ADDR, spi_check);
-  TX_ADDR_Write(&hspi1, 0xC2C2C2C2C2);
-  nRF_WriteOneRegister(&hspi1,RX_PW_P1, 8);
-  TX_Enhanced_ShockBurst_Config(&hspi1);
-  Set_CE_Low();
-  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 3);
-  Set_CE_High();
+  //lcd_init(&hi2c1);
+  //menu_init(&hi2c1);
+  //nRF_ReadOneRegister(&hspi1, TX_ADDR, spi_check);
 
+  Set_CE_Low();
+  RX_PW_P_NUM_Number_Of_Bytes(&hspi1, 0, 8);
+  TX_ADDR_Write(&hspi1, 0xC2C2C2C2C2);
+  RX_ADDR_P0_Write(&hspi1, 0xA2A2A2A2A2);
+  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 1);
+  nRF_WriteOneRegister(&hspi1, EN_AA, 0x00);
+  nRF_WriteOneRegister(&hspi1,RF_SETUP, 0x7);
+  CONFIG_REG_Write(&hspi1, 0xa);
+  nrfmode=MODE_TX;
+  Set_CE_High();
+  HAL_Delay(2);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -139,12 +145,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+  //osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  //defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(LCD_Task, "LCD", 256, NULL, 0, &LCD_Handle);
+  //xTaskCreate(LCD_Task, "LCD", 256, NULL, 0, &LCD_Handle);
   xTaskCreate(NRF_Task, "NRF", 256, NULL, 0, &NRF_Handle);
   /* USER CODE END RTOS_THREADS */
 
@@ -158,6 +164,9 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+	  //TX_Communication(&hspi1,"hello");
+	  //vTaskDelay(10);
+	 // HAL_Delay(10);
 
     /* USER CODE BEGIN 3 */
   }
@@ -355,7 +364,7 @@ void NRF_Task(void *argument)
 
 	while(1)
 	{
-		sprintf((char*)spi_tx,"12345678");
+		sprintf((char*)spi_tx,"kuiyedgf");
 		if(TX_Communication(&hspi1, spi_tx)==STATUS_TX_OK)
 		{
 			Select_Rx_Mode_RTOS(&hspi1);
@@ -364,6 +373,9 @@ void NRF_Task(void *argument)
 		{
 			Select_Tx_Mode_RTOS(&hspi1);
 		}
+		//sprintf((char*)spi_tx,"hello+/%d",I);
+		//TX_Communication(&hspi1,spi_tx );
+		//I++;
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
