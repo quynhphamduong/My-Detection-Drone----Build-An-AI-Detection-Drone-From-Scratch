@@ -16,14 +16,14 @@ extern "C" {
 
 #define TWO_MODOULES 0
 
-#define CHIP_SELECT_GPIO GPIOB
-#define CHIP_SELECT_PIN GPIO_PIN_0
+#define CHIP_SELECT_GPIO GPIOA
+#define CHIP_SELECT_PIN GPIO_PIN_4
 
 #define CE_GPIO GPIOB
-#define CE_PIN GPIO_PIN_1
+#define CE_PIN GPIO_PIN_0
 
 #define IRQ_GPIO GPIOB
-#define IRQ_PIN GPIO_PIN_2
+#define IRQ_PIN GPIO_PIN_1
 
 #define NRF_SPI_TIMEOUT 100
 
