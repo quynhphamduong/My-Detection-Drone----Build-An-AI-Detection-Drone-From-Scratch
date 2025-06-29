@@ -141,11 +141,9 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 //  Calibration(&htim2);
-  nRF_WriteOneRegister(&hspi1, RX_PW_P1, 8);
   RX_Enhanced_ShockBurst_Config(&hspi1);
-  Set_CE_Low();
-  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 3);
-  Set_CE_High();
+  RX_PW_P_NUM_Number_Of_Bytes(&hspi1, PIPE1, 8);
+  Enable_Data_Pipe(&hspi1, 0b11);
   HAL_TIM_Base_Start_IT(&htim3);
   /* USER CODE END 2 */
 

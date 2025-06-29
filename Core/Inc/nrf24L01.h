@@ -117,6 +117,16 @@ typedef enum
 }NRF_MODE;
 
 
+typedef enum
+{
+	PIPE0,
+	PIPE1,
+	PIPE2,
+	PIPE3,
+	PIPE4,
+	PIPE5
+}PIPE_NUMBER;
+
 extern NRF_MODE nrfmode;
 
 void Chip_Select();
@@ -151,9 +161,10 @@ void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data);
 void EN_AA_Enhanced_Shockburst_Auto_Acknowledgement_Pipe_Num(SPI_HandleTypeDef *hspi,uint8_t pipe);
 void RX_ADDR_P0_Write(SPI_HandleTypeDef *hspi,uint64_t data);
 void RX_ADDR_P1_Write(SPI_HandleTypeDef *hspi,uint64_t data);
-void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,int num,uint8_t data);
+void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t data);
 void TX_ADDR_Write(SPI_HandleTypeDef *hspi,uint64_t data);
-void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,int num,uint8_t data);
+void Enable_Data_Pipe(SPI_HandleTypeDef *hspi,uint8_t data);
+void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t data);
 
 
 

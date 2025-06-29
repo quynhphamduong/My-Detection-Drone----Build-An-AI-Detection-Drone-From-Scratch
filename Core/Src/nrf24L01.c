@@ -271,7 +271,9 @@ void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data)
 
 void EN_AA_Enhanced_Shockburst_Auto_Acknowledgement_Pipe_Num(SPI_HandleTypeDef *hspi,uint8_t pipe)
 {
+	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, EN_AA, pipe&0x3F);
+	Set_CE_High();
 }
 
 void RX_ADDR_P0_Write(SPI_HandleTypeDef *hspi,uint64_t data)
@@ -283,7 +285,9 @@ void RX_ADDR_P0_Write(SPI_HandleTypeDef *hspi,uint64_t data)
 		buff[i]=(uint8_t)((temp)&0xff);
 		temp=temp>>8;
 	}
+	Set_CE_Low();
 	nRF_WriteRegister(hspi, RX_ADDR_P0, buff, 5);
+	Set_CE_High();
 
 }
 
@@ -296,30 +300,34 @@ void RX_ADDR_P1_Write(SPI_HandleTypeDef *hspi,uint64_t data)
 		buff[i]=(uint8_t)((temp)&0xff);
 		temp=temp>>8;
 	}
+	Set_CE_Low();
 	nRF_WriteRegister(hspi, RX_ADDR_P1, buff, 5);
+	Set_CE_High();
 }
 
-void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,int num,uint8_t data)
+void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t data)
 {
 	uint8_t reg;
-	switch(num)
+	switch(pipe)
 	{
-	case 2:
+	case PIPE2:
 		reg=RX_ADDR_P2;
 		break;
-	case 3:
+	case PIPE3:
 		reg=RX_ADDR_P3;
 		break;
-	case 4:
+	case PIPE4:
 		reg=RX_ADDR_P4;
 		break;
-	case 5:
+	case PIPE5:
 		reg=RX_ADDR_P5;
 		break;
 	default:
 		return;
 	}
+	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, reg, data);
+	Set_CE_High();
 }
 
 void TX_ADDR_Write(SPI_HandleTypeDef *hspi,uint64_t data)
@@ -331,34 +339,45 @@ void TX_ADDR_Write(SPI_HandleTypeDef *hspi,uint64_t data)
 		buff[i]=(uint8_t)((temp)&0xff);
 		temp=temp>>8;
 	}
+	Set_CE_Low();
 	nRF_WriteRegister(hspi, TX_ADDR, buff, 5);
+	Set_CE_High();
 }
 
-void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,int num,uint8_t data)
+void Enable_Data_Pipe(SPI_HandleTypeDef *hspi,uint8_t data)
+{
+	Set_CE_Low();
+	nRF_WriteOneRegister(hspi, EN_RXADDR,data);
+	Set_CE_High();
+}
+
+void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,PIPE_NUMBER pipe,uint8_t data)
 {
 	uint8_t reg;
-	switch(num)
+	switch(pipe)
 		{
-		case 0:
+		case PIPE0:
 			reg=RX_PW_P0;
 			break;
-		case 1:
+		case PIPE1:
 			reg=RX_PW_P1;
 			break;
-		case 2:
+		case PIPE2:
 			reg=RX_PW_P2;
 			break;
-		case 3:
+		case PIPE3:
 			reg=RX_PW_P3;
 			break;
-		case 4:
+		case PIPE4:
 			reg=RX_PW_P4;
 			break;
-		case 5:
+		case PIPE5:
 			reg=RX_PW_P5;
 			break;
 		default:
 			return;
 		}
+	Set_CE_Low();
 	nRF_WriteOneRegister(hspi, reg, data);
+	Set_CE_High();
 }
