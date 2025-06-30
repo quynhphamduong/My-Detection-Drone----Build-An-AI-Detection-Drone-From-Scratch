@@ -1,0 +1,13 @@
+../Core/Src/lcd_gui.c:28:6:render_menu	24	static
+../Core/Src/lcd_gui.c:84:6:menu_init	16	static
+../Core/Src/lcd_gui.c:90:6:on_up	16	static
+../Core/Src/lcd_gui.c:97:6:on_down	16	static
+../Core/Src/lcd_gui.c:104:6:on_select	16	static
+../Core/Src/lcd_gui.c:109:6:on_back	16	static
+../Core/Src/lcd_gui.c:119:6:mainMenuCallback	16	static
+../Core/Src/lcd_gui.c:134:6:menuCallback	16	static
+../Core/Src/lcd_gui.c:148:6:settingsCallback	16	static
+../Core/Src/lcd_gui.c:178:6:buzzerCallback	16	static
+../Core/Src/lcd_gui.c:193:6:flightStatusCallback	16	static
+../Core/Src/lcd_gui.c:202:6:gpsStatusCallback	16	static
+../Core/Src/lcd_gui.c:209:6:gpsSettingsCallback	16	static
