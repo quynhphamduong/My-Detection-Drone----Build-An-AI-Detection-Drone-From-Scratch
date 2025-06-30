@@ -37,11 +37,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00018c9f  00000000  00000000  00020db4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00016aa3  00000000  00000000  00039a53  2**0
+ 17 .debug_line   00016aa2  00000000  00000000  00039a53  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    000992cd  00000000  00000000  000504f6  2**0
+ 18 .debug_str    000992cd  00000000  00000000  000504f5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000e97c3  2**0
+ 19 .comment      00000043  00000000  00000000  000e97c2  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00005a30  00000000  00000000  000e9808  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -505,12 +505,12 @@ int main(void)
 //  nrfmode=MODE_RX;
 //  Set_CE_High();
 //  HAL_Delay(2);
-  Two_Way_Commuination_Pipe0_Config(&hspi1,0xC2C2C2C2C2, 0xA2A2A2A2A2);
+  Two_Way_Commuination_Pipe0_Config(&hspi1,0xC5C5C5C5C5, 0xA2A2A2A2A2);
  80005fa:	f04f 32a2 	mov.w	r2, #2728567458	@ 0xa2a2a2a2
  80005fe:	f04f 03a2 	mov.w	r3, #162	@ 0xa2
  8000602:	e9cd 2300 	strd	r2, r3, [sp]
- 8000606:	f04f 32c2 	mov.w	r2, #3267543746	@ 0xc2c2c2c2
- 800060a:	f04f 03c2 	mov.w	r3, #194	@ 0xc2
+ 8000606:	f04f 32c5 	mov.w	r2, #3318072773	@ 0xc5c5c5c5
+ 800060a:	f04f 03c5 	mov.w	r3, #197	@ 0xc5
  800060e:	480a      	ldr	r0, [pc, #40]	@ (8000638 <main+0x58>)
  8000610:	f000 fb3a 	bl	8000c88 <Two_Way_Commuination_Pipe0_Config>
   Select_Tx_Mode(&hspi1);
@@ -1073,11 +1073,9 @@ void NRF_Task(void *argument)
  800095e:	4908      	ldr	r1, [pc, #32]	@ (8000980 <NRF_Task+0x40>)
  8000960:	4806      	ldr	r0, [pc, #24]	@ (800097c <NRF_Task+0x3c>)
  8000962:	f000 fa05 	bl	8000d70 <RX_Communication>
+		{
 
 		}
-		//sprintf((char*)spi_tx,"hello+/%d",I);
-		//TX_Communication(&hspi1,spi_tx );
-		//I++;
 		i++;
  8000966:	68fb      	ldr	r3, [r7, #12]
  8000968:	3301      	adds	r3, #1

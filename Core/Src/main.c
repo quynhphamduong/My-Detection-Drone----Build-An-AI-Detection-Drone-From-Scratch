@@ -113,7 +113,7 @@ int main(void)
   //lcd_init(&hi2c1);
   //menu_init(&hi2c1);
   //nRF_ReadOneRegister(&hspi1, TX_ADDR, spi_check);
-
+//
 //  Set_CE_Low();
 //  RX_PW_P_NUM_Number_Of_Bytes(&hspi1, 0, 8);
 //  TX_ADDR_Write(&hspi1, 0xC2C2C2C2C2);
@@ -125,7 +125,7 @@ int main(void)
 //  nrfmode=MODE_RX;
 //  Set_CE_High();
 //  HAL_Delay(2);
-  Two_Way_Commuination_Pipe0_Config(&hspi1,0xC2C2C2C2C2, 0xA2A2A2A2A2);
+  Two_Way_Commuination_Pipe0_Config(&hspi1,0xC5C5C5C5C5, 0xA2A2A2A2A2);
   Select_Tx_Mode(&hspi1);
   /* USER CODE END 2 */
 
@@ -375,9 +375,6 @@ void NRF_Task(void *argument)
 		{
 
 		}
-		//sprintf((char*)spi_tx,"hello+/%d",I);
-		//TX_Communication(&hspi1,spi_tx );
-		//I++;
 		i++;
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}

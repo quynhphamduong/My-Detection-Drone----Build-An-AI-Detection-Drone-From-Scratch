@@ -162,7 +162,7 @@ void Select_Rx_Mode(SPI_HandleTypeDef *hspi)
 	Set_CE_High();
 	HAL_Delay(2);
 	nRF_SendCmd(hspi, FLUSH_RX);
-	nrfmode = MODE_TX;
+	nrfmode = MODE_RX;
 }
 
 #if USING_NRF_RTOS==1
@@ -210,7 +210,6 @@ void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi)
 	CONFIG_REG_Write(hspi, buff);
 	Set_CE_High();
 	vTaskDelay(pdMS_TO_TICKS(2));
-	nRF_SendCmd(hspi, FLUSH_RX);
 	nrfmode = MODE_RX;
 }
 #endif
