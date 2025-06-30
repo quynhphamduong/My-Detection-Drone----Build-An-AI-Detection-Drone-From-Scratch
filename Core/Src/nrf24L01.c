@@ -129,18 +129,6 @@ void TX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
 	nrfmode = MODE_TX;
 }
 
-void TX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi)
-{
-	uint8_t buff = 0x0a;
-	Set_CE_Low();
-	CONFIG_REG_Write(hspi, buff);
-	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
-	nRF_WriteOneRegister(hspi, RF_SETUP, 0x7);
-	Set_CE_High();
-	vTaskDelay(pdMS_TO_TICKS(2));
-	nrfmode = MODE_TX;
-}
-
 void Select_Tx_Mode(SPI_HandleTypeDef *hspi)
 {
 	uint8_t buff = 0x0a;
@@ -148,16 +136,6 @@ void Select_Tx_Mode(SPI_HandleTypeDef *hspi)
 	CONFIG_REG_Write(hspi, buff);
 	Set_CE_High();
 	HAL_Delay(2);
-	nrfmode = MODE_TX;
-}
-
-void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi)
-{
-	uint8_t buff = 0x0a;
-	Set_CE_Low();
-	CONFIG_REG_Write(hspi, buff);
-	Set_CE_High();
-	vTaskDelay(pdMS_TO_TICKS(2));
 	nrfmode = MODE_TX;
 }
 
@@ -176,6 +154,40 @@ void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi)
 	nrfmode = MODE_RX;
 }
 
+void Select_Rx_Mode(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff = 0x0b;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	Set_CE_High();
+	HAL_Delay(2);
+	nRF_SendCmd(hspi, FLUSH_RX);
+	nrfmode = MODE_TX;
+}
+
+#if USING_NRF_RTOS==1
+void TX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff = 0x0a;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
+	nRF_WriteOneRegister(hspi, RF_SETUP, 0x7);
+	Set_CE_High();
+	vTaskDelay(pdMS_TO_TICKS(2));
+	nrfmode = MODE_TX;
+}
+
+void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi)
+{
+	uint8_t buff = 0x0a;
+	Set_CE_Low();
+	CONFIG_REG_Write(hspi, buff);
+	Set_CE_High();
+	vTaskDelay(pdMS_TO_TICKS(2));
+	nrfmode = MODE_TX;
+}
+
 void RX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi)
 {
 	uint8_t buff = 0xb;
@@ -191,17 +203,6 @@ void RX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi)
 	nrfmode = MODE_RX;
 }
 
-void Select_Rx_Mode(SPI_HandleTypeDef *hspi)
-{
-	uint8_t buff = 0x0b;
-	Set_CE_Low();
-	CONFIG_REG_Write(hspi, buff);
-	Set_CE_High();
-	HAL_Delay(2);
-	nRF_SendCmd(hspi, FLUSH_RX);
-	nrfmode = MODE_TX;
-}
-
 void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi)
 {
 	uint8_t buff = 0x0b;
@@ -212,16 +213,17 @@ void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi)
 	nRF_SendCmd(hspi, FLUSH_RX);
 	nrfmode = MODE_RX;
 }
+#endif
 
 void Two_Way_Commuination_Pipe0_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr)
 {
 	Set_CE_Low();
-	RX_PW_P_NUM_Number_Of_Bytes(&hspi1, 0, 8);
-	TX_ADDR_Write(&hspi1, tx_addr);
-	RX_ADDR_P0_Write(&hspi1, rx_addr);
-	nRF_WriteOneRegister(&hspi1, EN_RXADDR, 1);
-	nRF_WriteOneRegister(&hspi1, EN_AA, 0x00);
-	nRF_WriteOneRegister(&hspi1, RF_SETUP, 0x7);
+	RX_PW_P_NUM_Number_Of_Bytes(hspi, 0, 8);
+	TX_ADDR_Write(hspi, tx_addr);
+	RX_ADDR_P0_Write(hspi, rx_addr);
+	nRF_WriteOneRegister(hspi, EN_RXADDR, 1);
+	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
+	nRF_WriteOneRegister(hspi, RF_SETUP, 0x7);
 	Set_CE_High();
 	HAL_Delay(2);
 }
@@ -229,12 +231,12 @@ void Two_Way_Commuination_Pipe0_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr
 void Two_Way_Commuination_Pipe1_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr)
 {
 	Set_CE_Low();
-	RX_PW_P_NUM_Number_Of_Bytes(&hspi1, 1, 8);
-	RX_ADDR_P1_Write(&hspi1, rx_addr);
-	TX_ADDR_Write(&hspi1, tx_addr);
-	nRF_WriteOneRegister(&hspi1, EN_RXADDR, 2);
-	nRF_WriteOneRegister(&hspi1, EN_AA, 0x00);
-	nRF_WriteOneRegister(&hspi1, RF_SETUP, 0x7);
+	RX_PW_P_NUM_Number_Of_Bytes(hspi, 1, 8);
+	RX_ADDR_P1_Write(hspi, rx_addr);
+	TX_ADDR_Write(hspi, tx_addr);
+	nRF_WriteOneRegister(hspi, EN_RXADDR, 2);
+	nRF_WriteOneRegister(hspi, EN_AA, 0x00);
+	nRF_WriteOneRegister(hspi, RF_SETUP, 0x7);
 	Set_CE_High();
 	HAL_Delay(2);
 }

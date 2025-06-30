@@ -114,17 +114,19 @@ int main(void)
   //menu_init(&hi2c1);
   //nRF_ReadOneRegister(&hspi1, TX_ADDR, spi_check);
 
-  Set_CE_Low();
-  RX_PW_P_NUM_Number_Of_Bytes(&hspi1, 0, 8);
-  TX_ADDR_Write(&hspi1, 0xC2C2C2C2C2);
-  RX_ADDR_P0_Write(&hspi1, 0xA2A2A2A2A2);
-  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 1);
-  nRF_WriteOneRegister(&hspi1, EN_AA, 0x00);
-  nRF_WriteOneRegister(&hspi1,RF_SETUP, 0x7);
-  CONFIG_REG_Write(&hspi1, 0xb);
-  nrfmode=MODE_RX;
-  Set_CE_High();
-  HAL_Delay(2);
+//  Set_CE_Low();
+//  RX_PW_P_NUM_Number_Of_Bytes(&hspi1, 0, 8);
+//  TX_ADDR_Write(&hspi1, 0xC2C2C2C2C2);
+//  RX_ADDR_P0_Write(&hspi1, 0xA2A2A2A2A2);
+//  nRF_WriteOneRegister(&hspi1, EN_RXADDR, 1);
+//  nRF_WriteOneRegister(&hspi1, EN_AA, 0x00);
+//  nRF_WriteOneRegister(&hspi1,RF_SETUP, 0x7);
+//  CONFIG_REG_Write(&hspi1, 0xb);
+//  nrfmode=MODE_RX;
+//  Set_CE_High();
+//  HAL_Delay(2);
+  Two_Way_Commuination_Pipe0_Config(&hspi1,0xC2C2C2C2C2, 0xA2A2A2A2A2);
+  Select_Tx_Mode(&hspi1);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */

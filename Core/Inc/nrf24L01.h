@@ -12,9 +12,12 @@
 extern "C" {
 #endif
 #include "main.h"
-#include "cmsis_os.h"
 
-#define TWO_MODOULES 0
+#define USING_NRF_RTOS 1
+
+#if USING_NRF_RTOS==1
+#include "cmsis_os.h"
+#endif
 
 #define CHIP_SELECT_GPIO GPIOB
 #define CHIP_SELECT_PIN GPIO_PIN_0
@@ -86,12 +89,20 @@ void nRF_RX_Payload(SPI_HandleTypeDef *hspi,uint8_t *rx_data, uint16_t size);
 
 void TX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi);
 void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi);
+
+void Select_Tx_Mode(SPI_HandleTypeDef *hspi);
+void Select_Rx_Mode(SPI_HandleTypeDef *hspi);
+
+#if USING_NRF_RTOS==1
+void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi);
+void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi);
 void TX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi);
 void RX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi);
-void Select_Tx_Mode(SPI_HandleTypeDef *hspi);
-void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi);
-void Select_Rx_Mode(SPI_HandleTypeDef *hspi);
-void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi);
+#endif
+
+
+void Two_Way_Commuination_Pipe0_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr);
+void Two_Way_Commuination_Pipe1_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr);
 
 uint8_t TX_Communication(SPI_HandleTypeDef *hspi,uint8_t *data);
 uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data);
