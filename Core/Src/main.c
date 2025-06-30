@@ -121,8 +121,8 @@ int main(void)
   nRF_WriteOneRegister(&hspi1, EN_RXADDR, 1);
   nRF_WriteOneRegister(&hspi1, EN_AA, 0x00);
   nRF_WriteOneRegister(&hspi1,RF_SETUP, 0x7);
-  CONFIG_REG_Write(&hspi1, 0xa);
-  nrfmode=MODE_TX;
+  CONFIG_REG_Write(&hspi1, 0xb);
+  nrfmode=MODE_RX;
   Set_CE_High();
   HAL_Delay(2);
   /* USER CODE END 2 */
@@ -361,21 +361,22 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void NRF_Task(void *argument)
 {
-
+	int i=0;
 	while(1)
 	{
-		sprintf((char*)spi_tx,"kuiyedgf");
+		sprintf((char*)spi_tx,"ngu+%d",i);
 		if(TX_Communication(&hspi1, spi_tx)==STATUS_TX_OK)
 		{
-			Select_Rx_Mode_RTOS(&hspi1);
+
 		}
 		if(RX_Communication(&hspi1, spi_rx)==STATUS_RX_OK)
 		{
-			Select_Tx_Mode_RTOS(&hspi1);
+
 		}
 		//sprintf((char*)spi_tx,"hello+/%d",I);
 		//TX_Communication(&hspi1,spi_tx );
 		//I++;
+		i++;
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
