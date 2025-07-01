@@ -74,6 +74,18 @@ Drone_Control_Typedef control;
 xTaskHandle ESC_Handle;
 xTaskHandle NRF_Handle;
 
+xSemaphoreHandle TimerISR_Semaphore;
+
+NRF_HandleTypeDef nrf1={
+	GPIOA,
+	GPIOB,
+	GPIOB,
+	GPIO_PIN_4,
+	GPIO_PIN_0,
+	GPIO_PIN_1,
+	&hspi1
+};
+int a;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -127,6 +139,9 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+
+
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
   float sample=powf(10,-3);
   pidControllersInit(&yaw, 20, 15, 5,0.1,sample,0.1,-0.1);
@@ -141,10 +156,12 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
 //  Calibration(&htim2);
-  RX_Enhanced_ShockBurst_Config(&hspi1);
-  RX_PW_P_NUM_Number_Of_Bytes(&hspi1, PIPE1, 8);
-  Enable_Data_Pipe(&hspi1, 0b11);
   HAL_TIM_Base_Start_IT(&htim3);
+  Two_Way_Commuination_Pipe0_Config(&nrf1,0xA2A2A2A2A2,0xC5C5C5C5C5);
+  Select_Rx_Mode(&nrf1);
+
+
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -153,6 +170,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+  TimerISR_Semaphore =xSemaphoreCreateBinary();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -170,8 +188,8 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(ESC_Task, "ESC", 128,NULL,1, &ESC_Handle);
-  xTaskCreate(NRF_Task, "NRF", 256, NULL, 2, &NRF_Handle);
+  xTaskCreate(ESC_Task, "ESC", 256,NULL,1, &ESC_Handle);
+  xTaskCreate(NRF_Task, "NRF", 256, NULL, 0, &NRF_Handle);
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -387,8 +405,8 @@ static void MX_TIM3_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
-/* USER CODE BEGIN MX_GPIO_Init_1 */
-/* USER CODE END MX_GPIO_Init_1 */
+  /* USER CODE BEGIN MX_GPIO_Init_1 */
+  /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -432,8 +450,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-/* USER CODE BEGIN MX_GPIO_Init_2 */
-/* USER CODE END MX_GPIO_Init_2 */
+  /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
@@ -442,64 +460,60 @@ void ESC_Task(void *argument)
 
 	while(1)
 	{
-		if(timer3_flag==1)
-		{
-			/*
-			 * get picth measurement
-			 */
-			Calculate_Reference(&calculation, &control);
-			pidUpdate(&pitch, calculation.picth_measurement, calculation.picth_reference);
-			/*
-			 * get picth rate measuremet
-			 */
-			calculation.picth_rate_reference=pitch.u;
-			pidUpdate(&pitch_rate, calculation.picth_rate_measurement, calculation.picth_rate_reference);
+			if(timer3_flag==1)
+			{
+				Calculate_Reference(&calculation, &control);
+				pidUpdate(&pitch, calculation.picth_measurement, calculation.picth_reference);
+				/*
+				 * get picth rate measuremet
+				 */
+				calculation.picth_rate_reference=pitch.u;
+				pidUpdate(&pitch_rate, calculation.picth_rate_measurement, calculation.picth_rate_reference);
 
-			/*
-			 * get roll measurement
-			 */
-			pidUpdate(&roll, calculation.roll_measurement, calculation.roll_reference);
-			/*
-			 * get roll rate measurement
-			 */
-			calculation.roll_rate_reference=roll.u;
-			pidUpdate(&roll_rate, calculation.roll_rate_measurement, calculation.roll_rate_reference);
-			/*
-			 * get yaw measurement
-			 */
-			pidUpdate(&yaw, calculation.yaw_measurement, calculation.yaw_reference);
-			/*
-			* get yaw measurement
-			*/
-			calculation.yaw_rate_reference=yaw.u;
-			pidUpdate(&yaw_rate, calculation.yaw_rate_measurement, calculation.yaw_rate_reference);
-			/*
-			* get high measurement and high reference
-			*/
-			pidUpdate(&high, calculation.high_measurement, calculation.high_reference);
+				/*
+				 * get roll measurement
+				 */
+				pidUpdate(&roll, calculation.roll_measurement, calculation.roll_reference);
+				/*
+				 * get roll rate measurement
+				 */
+				calculation.roll_rate_reference=roll.u;
+				pidUpdate(&roll_rate, calculation.roll_rate_measurement, calculation.roll_rate_reference);
+				/*
+				 * get yaw measurement
+				 */
+				pidUpdate(&yaw, calculation.yaw_measurement, calculation.yaw_reference);
+				/*
+				* get yaw measurement
+				*/
+				calculation.yaw_rate_reference=yaw.u;
+				pidUpdate(&yaw_rate, calculation.yaw_rate_measurement, calculation.yaw_rate_reference);
+				/*
+				* get high measurement and high reference
+				*/
+				pidUpdate(&high, calculation.high_measurement, calculation.high_reference);
 
-			speed.speed1=-pitch_rate.u+roll_rate.u-yaw_rate.u+high.u;
-			speed.speed2=+pitch_rate.u+roll_rate.u+yaw_rate.u+high.u;
-			speed.speed3=+pitch_rate.u-roll_rate.u-yaw_rate.u+high.u;
-			speed.speed4=-pitch_rate.u-roll_rate.u-yaw_rate.u+high.u;
-
-
-			Control4Motor(&htim2, &speed);
-			timer3_flag=0;
-		}
-
+				speed.speed1=-pitch_rate.u+roll_rate.u-yaw_rate.u+high.u;
+				speed.speed2=+pitch_rate.u+roll_rate.u+yaw_rate.u+high.u;
+				speed.speed3=+pitch_rate.u-roll_rate.u-yaw_rate.u+high.u;
+				speed.speed4=-pitch_rate.u-roll_rate.u-yaw_rate.u+high.u;
+				Control4Motor(&htim2, &speed);
+				a++;
+				timer3_flag=0;
+			}
+			vTaskDelay(pdMS_TO_TICKS(1));
 
 	}
 }
 
 void NRF_Task(void *argument)
 {
-
+	int i=0;
 	while(1)
 	{
-		sprintf((char*)spi_tx,"87654321");
-		Two_Way_Communication_RTOS(&hspi1, spi_tx, spi_rx);
-		vTaskDelay(pdMS_TO_TICKS(10));
+		sprintf((char*)spi_tx,"ngu+%d",i);
+		Two_Way_Commuination_RTOS(&nrf1, spi_tx, spi_rx);
+		i++;
 	}
 }
 
@@ -536,16 +550,19 @@ void StartDefaultTask(void const * argument)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+//	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
+  if (htim->Instance == TIM1)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance==TIM3)
   {
 	  timer3_flag=1;
+//	  xSemaphoreGiveFromISR(TimerISR_Semaphore,&xHigherPriorityTaskWoken);
   }
+//  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
   /* USER CODE END Callback 1 */
 }
 
