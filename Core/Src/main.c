@@ -389,22 +389,22 @@ void Button_Task(void *argument)
 	         if(xSemaphoreTakeFromISR(xUpSem, 0) == pdTRUE)
 		  	  {
 		  		  on_up(&hi2c1);
-		  		  //UP_Pin_flag=0;
+
 		  	  }
 		  	  else if(xSemaphoreTakeFromISR(xDownSem, 0) == pdTRUE)
 		  	  {
 		  		  on_down(&hi2c1);
-		  		  //DOWN_Pin_flag=0;
+
 		  	  }
 		  	  else if(xSemaphoreTakeFromISR(xBackSem, 0) == pdTRUE)
 		  	  {
 		  		  on_back(&hi2c1);
-		  		  //BACK_Pin_flag=0;
+
 		  	  }
 		  	  else if(xSemaphoreTakeFromISR(xSelectSem, 0) == pdTRUE)
 		  	  {
 		  		  on_select(&hi2c1);
-		  		  //SELECT_Pin_flag=0;
+
 		  	  }
 	         vTaskDelay(pdMS_TO_TICKS(20)); // debounce
 	}
