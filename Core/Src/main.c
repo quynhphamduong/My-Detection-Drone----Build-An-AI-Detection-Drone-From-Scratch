@@ -36,7 +36,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define ADC_CHANNEL_COUNT 4
+uint16_t adc_buffer[ADC_CHANNEL_COUNT];  // Shared buffer
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -99,6 +100,17 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
+    if (hadc->Instance == ADC1) {
+        // Notify a FreeRTOS task
+        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+        vTaskNotifyGiveFromISR(adcTaskHandle, &xHigherPriorityTaskWoken);
+        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    }
+}
+
+
 /* USER CODE END 0 */
 
 /**
@@ -133,6 +145,7 @@ int main(void)
   MX_I2C1_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, ADC_CHANNEL_COUNT);
   lcd_init(&hi2c1);
   menu_init(&hi2c1);
   Two_Way_Commuination_Pipe0_Config(&hspi1, 0xC5C5C5C5C5, 0xA2A2A2A2A2);
@@ -408,6 +421,21 @@ void Button_Task(void *argument)
 		  	  }
 	         vTaskDelay(pdMS_TO_TICKS(20)); // debounce
 	}
+}
+
+void vAdcProcessingTask(void *pvParameters) {
+    for (;;) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // Wait for DMA complete
+
+        // Use adc_buffer[] safely here
+        uint16_t throttle = adc_buffer[0];
+        uint16_t yaw      = adc_buffer[1];
+        uint16_t pitch    = adc_buffer[2];
+        uint16_t roll     = adc_buffer[3];
+
+        RC_Input_t input = { throttle, yaw, pitch, roll };
+        rccommand_process(&input); 
+}
 }
 /* USER CODE END 4 */
 
