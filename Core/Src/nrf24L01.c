@@ -217,7 +217,7 @@ void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi)
 void Two_Way_Commuination_Pipe0_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr)
 {
 	Set_CE_Low();
-	RX_PW_P_NUM_Number_Of_Bytes(hspi, 0, 8);
+	RX_PW_P_NUM_Number_Of_Bytes(hspi, 0, 32);
 	TX_ADDR_Write(hspi, tx_addr);
 	RX_ADDR_P0_Write(hspi, rx_addr);
 	nRF_WriteOneRegister(hspi, EN_RXADDR, 1);
@@ -230,7 +230,7 @@ void Two_Way_Commuination_Pipe0_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr
 void Two_Way_Commuination_Pipe1_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr)
 {
 	Set_CE_Low();
-	RX_PW_P_NUM_Number_Of_Bytes(hspi, 1, 8);
+	RX_PW_P_NUM_Number_Of_Bytes(hspi, 1, 32);
 	RX_ADDR_P1_Write(hspi, rx_addr);
 	TX_ADDR_Write(hspi, tx_addr);
 	nRF_WriteOneRegister(hspi, EN_RXADDR, 2);
@@ -244,7 +244,7 @@ uint8_t TX_Communication(SPI_HandleTypeDef *hspi, uint8_t *data)
 {
 	if (nrfmode == MODE_TX)
 	{
-		nRF_TX_Payload(hspi, data, 8);
+		nRF_TX_Payload(hspi, data, 32);
 		Set_CE_High();
 		WaitForIRQ();
 		nRF_SendCmd(hspi, FLUSH_TX);
@@ -274,7 +274,7 @@ uint8_t RX_Communication(SPI_HandleTypeDef *hspi, uint8_t *rx_data)
 		if ((status & (1 << RX_DR)) != 0)
 		{
 			nRF_WriteOneRegister(hspi, STATUS, (1 << 6));
-			nRF_RX_Payload(hspi, rx_data, 8);
+			nRF_RX_Payload(hspi, rx_data, 32);
 			return STATUS_RX_OK;
 		}
 		nRF_SendCmd(hspi, FLUSH_RX);

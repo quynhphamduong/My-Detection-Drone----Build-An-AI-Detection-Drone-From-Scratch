@@ -34,6 +34,6 @@ typedef struct {
 void rccommand_init(void);
 
 // Call this function in loop to read ADC and send command if needed
-void rccommand_process(const RC_Input_t* input);
+const char* rccommand_process(const RC_Input_t *input);
 
 #endif /* INC_RCCOMMAND_H_ */

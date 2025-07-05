@@ -17,7 +17,7 @@ void rccommand_init(void)
     lastCmd = RC_CMD_NONE;
 }
 
-void rccommand_process(const RC_Input_t *input)
+const char* rccommand_process(const RC_Input_t *input)
 {
     RC_Command_t cmd = RC_CMD_NONE;
 
@@ -45,40 +45,38 @@ void rccommand_process(const RC_Input_t *input)
     else if (input->roll < CENTER - THRESHOLD)
         cmd |= RC_CMD_LEFT;
 
-    if (cmd != lastCmd)
-    {
-        lastCmd = cmd;
-        rccommand_on_command(cmd);
-    }
+    static char buf[64];
+        buf[0] = '\0';
+        strcat(buf, "CMD:");
+
+        if (cmd == RC_CMD_NONE) {
+            strcat(buf, "STOP");
+        } else {
+            if (cmd & RC_CMD_UP)         strcat(buf, "UP|");
+            if (cmd & RC_CMD_DOWN)       strcat(buf, "DOWN|");
+            if (cmd & RC_CMD_LEFT)       strcat(buf, "LEFT|");
+            if (cmd & RC_CMD_RIGHT)      strcat(buf, "RIGHT|");
+            if (cmd & RC_CMD_FORWARD)    strcat(buf, "FORWARD|");
+            if (cmd & RC_CMD_BACKWARD)   strcat(buf, "BACKWARD|");
+            if (cmd & RC_CMD_YAW_LEFT)   strcat(buf, "YAW_LEFT|");
+            if (cmd & RC_CMD_YAW_RIGHT)  strcat(buf, "YAW_RIGHT|");
+
+            size_t len = strlen(buf);
+            if (buf[len - 1] == '|') buf[len - 1] = '\0';
+        }
+
+        strcat(buf, "\n");
+
+        // Chỉ trả chuỗi nếu có thay đổi
+        if (cmd != lastCmd)
+        {
+            lastCmd = cmd;
+            return buf;
+        }
+        else
+        {
+            return NULL;
+        }
 }
 
-void __attribute__((weak)) rccommand_on_command(RC_Command_t cmd)
-{
-    char buf[128] = "CMD:";
 
-    if (cmd == RC_CMD_NONE)
-    {
-        strcat(buf, "STOP");
-    }
-    else
-    {
-        if (cmd & RC_CMD_UP)
-            strcat(buf, "UP");
-        if (cmd & RC_CMD_DOWN)
-            strcat(buf, "DOWN");
-        if (cmd & RC_CMD_LEFT)
-            strcat(buf, "LEFT");
-        if (cmd & RC_CMD_RIGHT)
-            strcat(buf, "RIGHT");
-        if (cmd & RC_CMD_FORWARD)
-            strcat(buf, "FORWARD");
-        if (cmd & RC_CMD_BACKWARD)
-            strcat(buf, "BACKWARD");
-        if (cmd & RC_CMD_YAW_LEFT)
-            strcat(buf, "YAW_LEFT");
-        if (cmd & RC_CMD_YAW_RIGHT)
-            strcat(buf, "YAW_RIGHT");
-    }
-
-    strcat(buf, "\n");
-}
