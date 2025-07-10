@@ -89,6 +89,7 @@ NRF_HandleTypeDef nrf1={
 	&hspi1
 };
 int a;
+uint8_t stat;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -589,7 +590,11 @@ void NRF_Task(void *argument)
 	while(1)
 	{
 		sprintf((char*)spi_tx,"ngu+%d",i);
-		TX_Communication(&nrf1, spi_tx);
+		if(TX_Communication(&nrf1, spi_tx)==STATUS_TX_OK)
+		{
+			stat++;
+		}
+		vTaskDelay(pdMS_TO_TICKS(10));
 		i++;
 	}
 }

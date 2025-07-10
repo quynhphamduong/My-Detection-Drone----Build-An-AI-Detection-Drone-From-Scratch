@@ -8,8 +8,6 @@
 #include "nRF24L01.h"
 #include "main.h"
 
-static NRF_MODE nrfmode;
-
 void Chip_Select(NRF_HandleTypeDef *nrf)
 {
 	HAL_GPIO_WritePin(nrf->CS_GPIO, nrf->CS_PIN, 0);
@@ -128,7 +126,7 @@ void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t tx_addr)
 	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
-	nrfmode = MODE_TX;
+	nrf->nrfmode = MODE_TX;
 }
 
 void Select_Tx_Mode(NRF_HandleTypeDef *nrf)
@@ -138,7 +136,7 @@ void Select_Tx_Mode(NRF_HandleTypeDef *nrf)
 	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
-	nrfmode = MODE_TX;
+	nrf->nrfmode = MODE_TX;
 }
 
 void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t rx_addr)
@@ -154,7 +152,7 @@ void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t rx_addr)
 	Set_CE_High(nrf);
 	HAL_Delay(2);
 	nRF_SendCmd(nrf, FLUSH_RX);
-	nrfmode = MODE_RX;
+	nrf->nrfmode = MODE_RX;
 }
 
 void Select_Rx_Mode(NRF_HandleTypeDef *nrf)
@@ -164,7 +162,7 @@ void Select_Rx_Mode(NRF_HandleTypeDef *nrf)
 	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
-	nrfmode = MODE_RX;
+	nrf->nrfmode = MODE_RX;
 }
 
 #if USING_NRF_RTOS==1
@@ -177,7 +175,7 @@ void TX_Enhanced_ShockBurst_Config_RTOS(NRF_HandleTypeDef *nrf)
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
 	Set_CE_High(nrf);
 	vTaskDelay(pdMS_TO_TICKS(2));
-	nrfmode = MODE_TX;
+	nrf->nrfmode = MODE_TX;
 }
 
 void Select_Tx_Mode_RTOS(NRF_HandleTypeDef *nrf)
@@ -187,7 +185,7 @@ void Select_Tx_Mode_RTOS(NRF_HandleTypeDef *nrf)
 	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	vTaskDelay(pdMS_TO_TICKS(2));
-	nrfmode = MODE_TX;
+	nrf->nrfmode = MODE_TX;
 }
 
 void RX_Enhanced_ShockBurst_Config_RTOS(NRF_HandleTypeDef *nrf)
@@ -202,7 +200,7 @@ void RX_Enhanced_ShockBurst_Config_RTOS(NRF_HandleTypeDef *nrf)
 	Set_CE_High(nrf);
 	vTaskDelay(pdMS_TO_TICKS(2));
 	nRF_SendCmd(nrf, FLUSH_RX);
-	nrfmode = MODE_RX;
+	nrf->nrfmode = MODE_RX;
 }
 
 void Select_Rx_Mode_RTOS(NRF_HandleTypeDef *nrf)
@@ -212,7 +210,7 @@ void Select_Rx_Mode_RTOS(NRF_HandleTypeDef *nrf)
 	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	vTaskDelay(pdMS_TO_TICKS(2));
-	nrfmode = MODE_RX;
+	nrf->nrfmode = MODE_RX;
 }
 
 void Two_Way_Commuination_RTOS(NRF_HandleTypeDef *nrf,uint8_t *tx_data,uint8_t *rx_data)
@@ -255,7 +253,7 @@ void Two_Way_Commuination_Pipe1_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr,
 
 uint8_t TX_Communication(NRF_HandleTypeDef *nrf, uint8_t *data)
 {
-	if (nrfmode == MODE_TX)
+	if (nrf->nrfmode == MODE_TX)
 	{
 		nRF_TX_Payload(nrf, data, 32);
 		Set_CE_High(nrf);
@@ -280,7 +278,7 @@ uint8_t TX_Communication(NRF_HandleTypeDef *nrf, uint8_t *data)
 
 uint8_t RX_Communication(NRF_HandleTypeDef *nrf, uint8_t *rx_data)
 {
-	if (nrfmode == MODE_RX)
+	if (nrf->nrfmode == MODE_RX)
 	{
 		Set_CE_High(nrf);
 		uint8_t status = nRF_GetStatus(nrf);

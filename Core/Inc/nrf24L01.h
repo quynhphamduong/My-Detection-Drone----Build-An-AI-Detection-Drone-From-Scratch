@@ -40,6 +40,7 @@ typedef struct
 	uint16_t CE_PIN;
 	uint16_t IRQ_PIN;
 	SPI_HandleTypeDef *hspi;
+	uint8_t nrfmode;
 }NRF_HandleTypeDef;
 
 typedef enum
