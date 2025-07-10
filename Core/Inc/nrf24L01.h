@@ -99,8 +99,8 @@ uint8_t nRF_GetStatus(NRF_HandleTypeDef *nrf);
 void nRF_TX_Payload(NRF_HandleTypeDef *nrf, uint8_t *data, uint16_t size);
 void nRF_RX_Payload(NRF_HandleTypeDef *nrf, uint8_t *rx_data, uint16_t size);
 
-void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf);
-void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf);
+void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t tx_addr);
+void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t rx_addr);
 
 void Select_Tx_Mode(NRF_HandleTypeDef *nrf);
 void Select_Rx_Mode(NRF_HandleTypeDef *nrf);

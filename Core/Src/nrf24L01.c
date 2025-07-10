@@ -117,13 +117,14 @@ void nRF_RX_Payload(NRF_HandleTypeDef *nrf, uint8_t *rx_data, uint16_t size)
 	Chip_Deselect(nrf);
 }
 
-void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf)
+void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t tx_addr)
 {
 	uint8_t buff = 0x0a;
 	Set_CE_Low(nrf);
-	CONFIG_REG_Write(nrf, buff);
+	TX_ADDR_Write(nrf, tx_addr);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
+	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
 	nrfmode = MODE_TX;
@@ -139,15 +140,16 @@ void Select_Tx_Mode(NRF_HandleTypeDef *nrf)
 	nrfmode = MODE_TX;
 }
 
-void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf)
+void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t rx_addr)
 {
 	uint8_t buff = 0xb;
-	//	Set_CE_Low();
-	CONFIG_REG_Write(nrf, buff);
+	Set_CE_Low(nrf);
+	RX_ADDR_P0_Write(nrf,rx_addr);
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 0x01);
 	nRF_WriteOneRegister(nrf, RX_PW_P0, 8);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
+	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
 	nRF_SendCmd(nrf, FLUSH_RX);
