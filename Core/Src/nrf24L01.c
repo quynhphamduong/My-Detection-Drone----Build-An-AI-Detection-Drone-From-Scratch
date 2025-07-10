@@ -123,6 +123,7 @@ void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t tx_addr)
 	Set_CE_Low(nrf);
 	TX_ADDR_Write(nrf, tx_addr);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
+	nRF_WriteOneRegister(nrf, RX_PW_P0, 32);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
 	CONFIG_REG_Write(nrf, buff);
 	Set_CE_High(nrf);
@@ -146,7 +147,7 @@ void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t rx_addr)
 	Set_CE_Low(nrf);
 	RX_ADDR_P0_Write(nrf,rx_addr);
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 0x01);
-	nRF_WriteOneRegister(nrf, RX_PW_P0, 8);
+	nRF_WriteOneRegister(nrf, RX_PW_P0, 32);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
 	CONFIG_REG_Write(nrf, buff);
@@ -195,7 +196,7 @@ void RX_Enhanced_ShockBurst_Config_RTOS(NRF_HandleTypeDef *nrf)
 	Set_CE_Low(nrf);
 	CONFIG_REG_Write(nrf, buff);
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 0x01);
-	nRF_WriteOneRegister(nrf, RX_PW_P0, 8);
+	nRF_WriteOneRegister(nrf, RX_PW_P0, 32);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
 	Set_CE_High(nrf);
@@ -229,7 +230,7 @@ void Two_Way_Commuination_RTOS(NRF_HandleTypeDef *nrf,uint8_t *tx_data,uint8_t *
 void Two_Way_Commuination_Pipe0_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr, uint64_t rx_addr)
 {
 	Set_CE_Low(nrf);
-	RX_PW_P_NUM_Number_Of_Bytes(nrf, 0, 8);
+	RX_PW_P_NUM_Number_Of_Bytes(nrf, 0, 32);
 	TX_ADDR_Write(nrf, tx_addr);
 	RX_ADDR_P0_Write(nrf, rx_addr);
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 1);
@@ -242,7 +243,7 @@ void Two_Way_Commuination_Pipe0_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr,
 void Two_Way_Commuination_Pipe1_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr, uint64_t rx_addr)
 {
 	Set_CE_Low(nrf);
-	RX_PW_P_NUM_Number_Of_Bytes(nrf, 1, 8);
+	RX_PW_P_NUM_Number_Of_Bytes(nrf, 1, 32);
 	RX_ADDR_P1_Write(nrf, rx_addr);
 	TX_ADDR_Write(nrf, tx_addr);
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 2);
@@ -256,7 +257,7 @@ uint8_t TX_Communication(NRF_HandleTypeDef *nrf, uint8_t *data)
 {
 	if (nrfmode == MODE_TX)
 	{
-		nRF_TX_Payload(nrf, data, 8);
+		nRF_TX_Payload(nrf, data, 32);
 		Set_CE_High(nrf);
 		WaitForIRQ(nrf);
 		nRF_SendCmd(nrf, FLUSH_TX);
@@ -286,7 +287,7 @@ uint8_t RX_Communication(NRF_HandleTypeDef *nrf, uint8_t *rx_data)
 		if ((status & (1 << RX_DR)) != 0)
 		{
 			nRF_WriteOneRegister(nrf, STATUS, (1 << 6));
-			nRF_RX_Payload(nrf, rx_data, 8);
+			nRF_RX_Payload(nrf, rx_data, 32);
 			return STATUS_RX_OK;
 		}
 		nRF_SendCmd(nrf, FLUSH_RX);
