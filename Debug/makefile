@@ -56,6 +56,9 @@ default.size.stdout \
 OBJDUMP_LIST += \
 drone_project.list \
 
+OBJCOPY_HEX += \
+drone_project.hex \
+
 
 # All Target
 all: main-build
@@ -65,7 +68,7 @@ main-build: drone_project.elf secondary-outputs
 
 # Tool invocations
 drone_project.elf drone_project.map: $(OBJS) $(USER_OBJS) D:\STM32_workspace\drone_project\STM32F411CEUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "drone_project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\STM32_workspace\drone_project\STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="drone_project.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "drone_project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\STM32_workspace\drone_project\STM32F411CEUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="drone_project.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -79,12 +82,17 @@ drone_project.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
+drone_project.hex: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objcopy  -O ihex $(EXECUTABLES) "drone_project.hex"
+	@echo 'Finished building: $@'
+	@echo ' '
+
 # Other Targets
 clean:
-	-$(RM) default.size.stdout drone_project.elf drone_project.list drone_project.map
+	-$(RM) default.size.stdout drone_project.elf drone_project.hex drone_project.list drone_project.map
 	-@echo ' '
 
-secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
+secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_HEX)
 
 fail-specified-linker-script-missing:
 	@echo 'Error: Cannot find the specified linker script. Check the linker settings in the build configuration.'

@@ -22,11 +22,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#define FREERTOS_ENABLED
 #include "nRF24L01.h"
 #include "PID.h"
 #include "icm20602.h"
 #include "Drone_control.h"
 #include "Oneshot125_Esc_Control.h"
+#include "bno055_stm32.h"
 #include "math.h"
 #include "stdio.h"
 #include "string.h"
@@ -48,6 +50,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 
@@ -76,8 +80,7 @@ Drone_Control_Typedef control;
 
 xTaskHandle ESC_Handle;
 xTaskHandle NRF_Handle;
-
-xQueueHandle Data_To_NRF_Queue;
+xTaskHandle BNO_Handle;
 
 NRF_HandleTypeDef nrf1={
 	GPIOA,
@@ -90,6 +93,8 @@ NRF_HandleTypeDef nrf1={
 };
 int a;
 uint8_t stat;
+
+bno055_vector_t euler,gyro;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,6 +105,7 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_I2C1_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -110,6 +116,7 @@ void StartDefaultTask(void const * argument);
 /* USER CODE BEGIN 0 */
 void ESC_Task(void *argument);
 void NRF_Task(void *argument);
+void BNO_Task(void *argument);
 /* USER CODE END 0 */
 
 /**
@@ -146,6 +153,7 @@ int main(void)
   MX_TIM3_Init();
   MX_SPI2_Init();
   MX_USART1_UART_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -195,7 +203,8 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   xTaskCreate(ESC_Task, "ESC", 256,NULL,1, &ESC_Handle);
-  xTaskCreate(NRF_Task, "NRF", 256, NULL, 0, &NRF_Handle);
+  xTaskCreate(NRF_Task, "NRF", 256, (void*)&euler, 0, &NRF_Handle);
+  xTaskCreate(BNO_Task, "BNO", 256, NULL, 0, &BNO_Handle);
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -257,6 +266,40 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -537,8 +580,7 @@ void ESC_Task(void *argument)
 
 	while(1)
 	{
-			if(timer3_flag==1)
-			{
+
 				Calculate_Reference(&calculation, &control);
 				pidUpdate(&pitch, calculation.picth_measurement, calculation.picth_reference);
 				/*
@@ -577,7 +619,7 @@ void ESC_Task(void *argument)
 				Control4Motor(&htim2, &speed);
 				a++;
 				timer3_flag=0;
-			}
+
 			vTaskDelay(pdMS_TO_TICKS(1));
 
 	}
@@ -585,16 +627,28 @@ void ESC_Task(void *argument)
 
 void NRF_Task(void *argument)
 {
-	int i=0;
+	bno055_vector_t *g=argument;
 	while(1)
 	{
-		sprintf((char*)spi_tx,"ngu+%d",i);
+
+		sprintf((char*)spi_tx,"%.4f  %.4f  %.4f",g->y,g->z,g->x);
 		Two_Way_Commuination_RTOS(&nrf1, spi_tx, spi_rx);
 		vTaskDelay(pdMS_TO_TICKS(10));
-		i++;
 	}
 }
 
+void BNO_Task(void *argument)
+{
+	bno055_assignI2C(&hi2c1);
+	bno055_setup();
+	bno055_setOperationModeNDOF();
+	while(1)
+	{
+		gyro=bno055_getVectorGyroscope();
+		euler=bno055_getVectorEuler();
+		vTaskDelay(pdMS_TO_TICKS(10));
+	}
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
