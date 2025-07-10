@@ -234,6 +234,7 @@ void Two_Way_Commuination_Pipe0_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr,
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 1);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
+	CONFIG_REG_Write(nrf, 0xa);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
 }
@@ -247,6 +248,7 @@ void Two_Way_Commuination_Pipe1_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr,
 	nRF_WriteOneRegister(nrf, EN_RXADDR, 2);
 	nRF_WriteOneRegister(nrf, EN_AA, 0x00);
 	nRF_WriteOneRegister(nrf, RF_SETUP, 0x7);
+	CONFIG_REG_Write(nrf, 0xa);
 	Set_CE_High(nrf);
 	HAL_Delay(2);
 }

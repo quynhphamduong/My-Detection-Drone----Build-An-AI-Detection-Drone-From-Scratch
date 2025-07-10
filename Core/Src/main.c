@@ -165,8 +165,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
  // Calibration(&htim2);
   HAL_TIM_Base_Start_IT(&htim3);
-  TX_Enhanced_ShockBurst_Config(&nrf1, 0xA2A2A2A2A2);
-
+  Two_Way_Commuination_Pipe0_Config(&nrf1, 0xA2A2A2A2A2, 0xC5C5C5C5C5);
 
 
   /* USER CODE END 2 */
@@ -590,10 +589,7 @@ void NRF_Task(void *argument)
 	while(1)
 	{
 		sprintf((char*)spi_tx,"ngu+%d",i);
-		if(TX_Communication(&nrf1, spi_tx)==STATUS_TX_OK)
-		{
-			stat++;
-		}
+		Two_Way_Commuination_RTOS(&nrf1, spi_tx, spi_rx);
 		vTaskDelay(pdMS_TO_TICKS(10));
 		i++;
 	}
