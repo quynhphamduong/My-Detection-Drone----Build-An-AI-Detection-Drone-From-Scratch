@@ -1,3 +1,4 @@
+
 /*
  * nRF24L01.h
  *
@@ -19,16 +20,28 @@ extern "C" {
 #include "cmsis_os.h"
 #endif
 
-#define CHIP_SELECT_GPIO GPIOB
-#define CHIP_SELECT_PIN GPIO_PIN_0
+//#define CHIP_SELECT_GPIO GPIOA
+//#define CHIP_SELECT_PIN GPIO_PIN_4
 
-#define CE_GPIO GPIOB
-#define CE_PIN GPIO_PIN_1
-
-#define IRQ_GPIO GPIOB
-#define IRQ_PIN GPIO_PIN_2
+//#define CE_GPIO GPIOB
+//#define CE_PIN GPIO_PIN_0
+//
+//#define IRQ_GPIO GPIOB
+//#define IRQ_PIN GPIO_PIN_1
 
 #define NRF_SPI_TIMEOUT 100
+
+typedef struct
+{
+	GPIO_TypeDef *CS_GPIO;
+	GPIO_TypeDef *CE_GPIO;
+	GPIO_TypeDef *IRQ_GPIO;
+	uint16_t CS_PIN;
+	uint16_t CE_PIN;
+	uint16_t IRQ_PIN;
+	SPI_HandleTypeDef *hspi;
+	uint8_t nrfmode;
+}NRF_HandleTypeDef;
 
 typedef enum
 {
@@ -72,51 +85,52 @@ typedef enum
 
 }NRF24L01_REGISTER;
 
-void Chip_Select();
-void Chip_Deselect();
-void Set_CE_High();
-void Set_CE_Low();
-void WaitForIRQ();
+void Chip_Select(NRF_HandleTypeDef *nrf);
+void Chip_Deselect(NRF_HandleTypeDef *nrf);
+void Set_CE_High(NRF_HandleTypeDef *nrf);
+void Set_CE_Low(NRF_HandleTypeDef *nrf);
+void WaitForIRQ(NRF_HandleTypeDef *nrf);
 
-void nRF_WriteRegister(SPI_HandleTypeDef *hspi,uint8_t reg,uint8_t *data,int size);
-void nRF_ReadRegister(SPI_HandleTypeDef *hspi,uint8_t reg,uint8_t *receive_data,uint16_t size);
-void nRF_WriteOneRegister(SPI_HandleTypeDef *hspi,uint8_t reg,uint8_t data);
-void nRF_ReadOneRegister(SPI_HandleTypeDef *hspi,uint8_t reg,uint8_t *receive_data);
-void nRF_SendCmd(SPI_HandleTypeDef *hspi,uint8_t cmd);
-uint8_t nRF_NOPCmdGetStatus(SPI_HandleTypeDef *hspi);
-void nRF_TX_Payload(SPI_HandleTypeDef *hspi,uint8_t *data, uint16_t size);
-void nRF_RX_Payload(SPI_HandleTypeDef *hspi,uint8_t *rx_data, uint16_t size);
+void nRF_WriteRegister(NRF_HandleTypeDef *nrf, uint8_t reg, uint8_t *data, int size);
+void nRF_WriteOneRegister(NRF_HandleTypeDef *nrf, uint8_t reg, uint8_t data);
+void nRF_ReadRegister(NRF_HandleTypeDef *nrf, uint8_t reg, uint8_t *receive_data, uint16_t size);
+void nRF_ReadOneRegister(NRF_HandleTypeDef *nrf, uint8_t reg, uint8_t *receive_data);
+void nRF_SendCmd(NRF_HandleTypeDef *nrf, uint8_t cmd);
+uint8_t nRF_GetStatus(NRF_HandleTypeDef *nrf);
+void nRF_TX_Payload(NRF_HandleTypeDef *nrf, uint8_t *data, uint16_t size);
+void nRF_RX_Payload(NRF_HandleTypeDef *nrf, uint8_t *rx_data, uint16_t size);
 
-void TX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi);
-void RX_Enhanced_ShockBurst_Config(SPI_HandleTypeDef *hspi);
+void TX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t tx_addr);
+void RX_Enhanced_ShockBurst_Config(NRF_HandleTypeDef *nrf,uint64_t rx_addr);
 
-void Select_Tx_Mode(SPI_HandleTypeDef *hspi);
-void Select_Rx_Mode(SPI_HandleTypeDef *hspi);
+void Select_Tx_Mode(NRF_HandleTypeDef *nrf);
+void Select_Rx_Mode(NRF_HandleTypeDef *nrf);
 
 #if USING_NRF_RTOS==1
-void Select_Tx_Mode_RTOS(SPI_HandleTypeDef *hspi);
-void Select_Rx_Mode_RTOS(SPI_HandleTypeDef *hspi);
-void TX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi);
-void RX_Enhanced_ShockBurst_Config_RTOS(SPI_HandleTypeDef *hspi);
+void TX_Enhanced_ShockBurst_Config_RTOS(NRF_HandleTypeDef *nrf);
+void Select_Tx_Mode_RTOS(NRF_HandleTypeDef *nrf);
+void RX_Enhanced_ShockBurst_Config_RTOS(NRF_HandleTypeDef *nrf);
+void Select_Rx_Mode_RTOS(NRF_HandleTypeDef *nrf);
+void Two_Way_Commuination_RTOS(NRF_HandleTypeDef *nrf,uint8_t *tx_data,uint8_t *rx_data);
 #endif
 
 
-void Two_Way_Commuination_Pipe0_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr);
-void Two_Way_Commuination_Pipe1_Config(SPI_HandleTypeDef *hspi, uint64_t tx_addr, uint64_t rx_addr);
+void Two_Way_Commuination_Pipe0_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr, uint64_t rx_addr);
+void Two_Way_Commuination_Pipe1_Config(NRF_HandleTypeDef *nrf, uint64_t tx_addr, uint64_t rx_addr);
 
-uint8_t TX_Communication(SPI_HandleTypeDef *hspi,uint8_t *data);
-uint8_t RX_Communication(SPI_HandleTypeDef *hspi,uint8_t *rx_data);
-void Two_Way_Commuination(SPI_HandleTypeDef *hspi,uint8_t *tx_data,uint8_t *rx_data);
-void Two_Way_Commuination_RTOS(SPI_HandleTypeDef *hspi,uint8_t *tx_data,uint8_t *rx_data);
+uint8_t TX_Communication(NRF_HandleTypeDef *nrf, uint8_t *data);
+uint8_t RX_Communication(NRF_HandleTypeDef *nrf, uint8_t *rx_data);
+void Two_Way_Commuination(NRF_HandleTypeDef *nrf,uint8_t *tx_data,uint8_t *rx_data);
 
 
-void CONFIG_REG_Write(SPI_HandleTypeDef *hspi,uint8_t data);
-void EN_AA_Enhanced_Shockburst_Auto_Acknowledgement_Pipe_Num(SPI_HandleTypeDef *hspi,uint8_t pipe);
-void RX_ADDR_P0_Write(SPI_HandleTypeDef *hspi,uint64_t data);
-void RX_ADDR_P1_Write(SPI_HandleTypeDef *hspi,uint64_t data);
-void RX_ADDR_P2_To_P5_Write(SPI_HandleTypeDef *hspi,int num,uint8_t data);
-void TX_ADDR_Write(SPI_HandleTypeDef *hspi,uint64_t data);
-void RX_PW_P_NUM_Number_Of_Bytes(SPI_HandleTypeDef *hspi,int num,uint8_t data);
+
+void CONFIG_REG_Write(NRF_HandleTypeDef *nrf, uint8_t data);
+void EN_AA_Enhanced_Shockburst_Auto_Acknowledgement_Pipe_Num(NRF_HandleTypeDef *nrf, uint8_t pipe);
+void RX_ADDR_P0_Write(NRF_HandleTypeDef *nrf, uint64_t data);
+void RX_ADDR_P1_Write(NRF_HandleTypeDef *nrf, uint64_t data);
+void RX_ADDR_P2_To_P5_Write(NRF_HandleTypeDef *nrf, int num, uint8_t data);
+void TX_ADDR_Write(NRF_HandleTypeDef *nrf, uint64_t data);
+void RX_PW_P_NUM_Number_Of_Bytes(NRF_HandleTypeDef *nrf, int num, uint8_t data);
 
 
 
@@ -174,7 +188,7 @@ typedef enum
 	MODE_RX
 }NRF_MODE;
 
-extern NRF_MODE nrfmode;
+//extern NRF_MODE nrfmode;
 
 #ifdef __cplusplus
 }

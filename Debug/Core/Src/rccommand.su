@@ -1,0 +1,2 @@
+../Core/Src/rccommand.c:15:6:rccommand_init	4	static
+../Core/Src/rccommand.c:20:13:rccommand_process	24	static
