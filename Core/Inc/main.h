@@ -63,6 +63,12 @@ void Error_Handler(void);
 #define CE_GPIO_Port GPIOB
 #define IRQ_Pin GPIO_PIN_2
 #define IRQ_GPIO_Port GPIOB
+#define CS2_Pin GPIO_PIN_10
+#define CS2_GPIO_Port GPIOB
+#define CE2_Pin GPIO_PIN_12
+#define CE2_GPIO_Port GPIOB
+#define IRQ2_Pin GPIO_PIN_13
+#define IRQ2_GPIO_Port GPIOB
 #define BACK_Pin GPIO_PIN_15
 #define BACK_GPIO_Port GPIOB
 #define BACK_EXTI_IRQn EXTI15_10_IRQn
@@ -78,6 +84,8 @@ void Error_Handler(void);
 #define HOME_Pin GPIO_PIN_11
 #define HOME_GPIO_Port GPIOA
 #define HOME_EXTI_IRQn EXTI15_10_IRQn
+#define BUZZER_Pin GPIO_PIN_8
+#define BUZZER_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
