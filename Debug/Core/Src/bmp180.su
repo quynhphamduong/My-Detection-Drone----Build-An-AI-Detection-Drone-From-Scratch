@@ -1,0 +1,7 @@
+../Core/Src/bmp180.c:9:19:BMP180_Init	24	static
+../Core/Src/bmp180.c:20:26:BMP180_ReadCalibrationData	56	static
+../Core/Src/bmp180.c:43:16:BMP180_ReadUncompTemp	40	static
+../Core/Src/bmp180.c:55:7:BMP180_ReadTemperature	32	static
+../Core/Src/bmp180.c:66:16:BMP180_ReadUncompPress	40	static
+../Core/Src/bmp180.c:85:7:BMP180_ReadPressure	56	static
+../Core/Src/bmp180.c:115:7:BMP180_ReadAltitude	24	static

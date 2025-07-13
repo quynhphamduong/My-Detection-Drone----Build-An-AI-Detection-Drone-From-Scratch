@@ -28,6 +28,7 @@
 #include "icm20602.h"
 #include "Drone_control.h"
 #include "Oneshot125_Esc_Control.h"
+#include "bmp180.h"
 #include "bno055_stm32.h"
 #include "math.h"
 #include "stdio.h"
@@ -80,7 +81,7 @@ Drone_Control_Typedef control;
 
 xTaskHandle ESC_Handle;
 xTaskHandle NRF_Handle;
-xTaskHandle BNO_Handle;
+xTaskHandle SENSORS_Handle;
 
 NRF_HandleTypeDef nrf1={
 	GPIOA,
@@ -93,8 +94,10 @@ NRF_HandleTypeDef nrf1={
 };
 int a;
 uint8_t stat;
-
 bno055_vector_t euler,gyro;
+BMP180_Handle_t bmp180;
+
+float pressure,altitude;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,7 +119,7 @@ void StartDefaultTask(void const * argument);
 /* USER CODE BEGIN 0 */
 void ESC_Task(void *argument);
 void NRF_Task(void *argument);
-void BNO_Task(void *argument);
+void SENSORS_Task(void *argument);
 /* USER CODE END 0 */
 
 /**
@@ -173,9 +176,16 @@ int main(void)
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_4);
  // Calibration(&htim2);
   HAL_TIM_Base_Start_IT(&htim3);
-  Two_Way_Commuination_Pipe0_Config(&nrf1, 0xA2A2A2A2A2, 0xC5C5C5C5C5);
+  RX_Enhanced_ShockBurst_Config(&nrf1, 0xA2A2A2A2A2);
 
-
+  if (BMP180_Init(&bmp180, &hi2c1, 3) != HAL_OK)  // OSS = 3 (highest resolution)
+	{
+//		printf("BMP180 init failed!\r\n");
+	}
+	else
+	{
+//		printf("BMP180 init successful.\r\n");
+	}
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -204,7 +214,7 @@ int main(void)
   /* add threads, ... */
   xTaskCreate(ESC_Task, "ESC", 256,NULL,1, &ESC_Handle);
   xTaskCreate(NRF_Task, "NRF", 256, (void*)&euler, 0, &NRF_Handle);
-  xTaskCreate(BNO_Task, "BNO", 256, NULL, 0, &BNO_Handle);
+  xTaskCreate(SENSORS_Task, "SENSORS", 256, NULL, 0, &SENSORS_Handle);
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -632,12 +642,12 @@ void NRF_Task(void *argument)
 	{
 
 		sprintf((char*)spi_tx,"%.4f  %.4f  %.4f",g->y,g->z,g->x);
-		Two_Way_Commuination_RTOS(&nrf1, spi_tx, spi_rx);
+		RX_Communication(&nrf1, spi_rx);
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
 
-void BNO_Task(void *argument)
+void SENSORS_Task(void *argument)
 {
 	bno055_assignI2C(&hi2c1);
 	bno055_setup();
@@ -646,6 +656,8 @@ void BNO_Task(void *argument)
 	{
 		gyro=bno055_getVectorGyroscope();
 		euler=bno055_getVectorEuler();
+		pressure = BMP180_ReadPressure(&bmp180);
+		altitude = BMP180_ReadAltitude(&bmp180, BMP180_STD_ATM_PRESS); // 101325 Pa
 		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }

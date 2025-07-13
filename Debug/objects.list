@@ -1,6 +1,7 @@
 "./Core/Src/Drone_control.o"
 "./Core/Src/Oneshot125_Esc_Control.o"
 "./Core/Src/PID.o"
+"./Core/Src/bmp180.o"
 "./Core/Src/bno055.o"
 "./Core/Src/freertos.o"
 "./Core/Src/icm20602.o"
