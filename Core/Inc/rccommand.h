@@ -17,6 +17,7 @@ typedef enum {
     RC_CMD_DOWN      = 1 << 1,
     RC_CMD_LEFT      = 1 << 2,
     RC_CMD_RIGHT     = 1 << 3,
+
     RC_CMD_FORWARD   = 1 << 4,
     RC_CMD_BACKWARD  = 1 << 5,
     RC_CMD_YAW_LEFT  = 1 << 6,
@@ -34,6 +35,6 @@ typedef struct {
 void rccommand_init(void);
 
 // Call this function in loop to read ADC and send command if needed
-const char* rccommand_process(const RC_Input_t *input);
+void rccommand_process(const RC_Input_t *input, char *buf );
 
 #endif /* INC_RCCOMMAND_H_ */

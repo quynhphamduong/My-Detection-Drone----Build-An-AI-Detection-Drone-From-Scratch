@@ -60,9 +60,10 @@ SPI_HandleTypeDef hspi3;
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 QueueHandle_t commandQueue;
-SemaphoreHandle_t xUpSem, xDownSem, xSelectSem, xBackSem;
+SemaphoreHandle_t xUpSem, xDownSem, xSelectSem, xBackSem, xADCSem;
 uint8_t spi_tx[32];
 uint8_t spi_rx[32];
+char cmdStr[20];
 xTaskHandle LCD_Handle;
 xTaskHandle NRF_Handle;
 xTaskHandle ADC_Handle;
@@ -138,7 +139,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
     if (hadc->Instance == ADC1) {
         // Notify a FreeRTOS task
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-        vTaskNotifyGiveFromISR(ADC_Handle, &xHigherPriorityTaskWoken);
+        //vTaskNotifyGiveFromISR(ADC_Handle, &xHigherPriorityTaskWoken);
+        xSemaphoreGiveFromISR(xADCSem, &xHigherPriorityTaskWoken);
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
     }
 }
@@ -181,11 +183,12 @@ int main(void)
   MX_ADC1_Init();
   MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, ADC_CHANNEL_COUNT);
+
   lcd_init(&hi2c1);
   menu_init(&hi2c1);
-  TX_Enhanced_ShockBurst_Config(&nrf1, 0XA2A2A2A2A2);
-  RX_Enhanced_ShockBurst_Config(&nrf2, 0xD2D2D2D2D2);
+
+//  TX_Enhanced_ShockBurst_Config(&nrf1, 0XA2A2A2A2A2);
+//  RX_Enhanced_ShockBurst_Config(&nrf2, 0xD2D2D2D2D2);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -197,6 +200,7 @@ int main(void)
   xDownSem   = xSemaphoreCreateBinary();
   xSelectSem = xSemaphoreCreateBinary();
   xBackSem   = xSemaphoreCreateBinary();
+  xADCSem 	 = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -204,7 +208,11 @@ int main(void)
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
+  commandQueue = xQueueCreate(1, sizeof(char[32]));
+  if (commandQueue == NULL) {
+      Error_Handler();
+  }
+
   /* USER CODE END RTOS_QUEUES */
 
   /* Create the thread(s) */
@@ -217,7 +225,7 @@ int main(void)
   xTaskCreate(LCD_Task, "LCD", 256, NULL, 0, &LCD_Handle);
   xTaskCreate(NRF_Task, "NRF", 256, NULL, 0, &NRF_Handle);
   xTaskCreate(Button_Task, "BTN", 256, NULL, 1, NULL);
-  xTaskCreate(ADC_Task, "ADC", 128, NULL, 2, &ADC_Handle);
+  xTaskCreate(ADC_Task, "ADC", 256, NULL, 1, &ADC_Handle);
 
 
   /* USER CODE END RTOS_THREADS */
@@ -307,14 +315,14 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
   hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc1.Init.NbrOfConversion = 4;
+  hadc1.Init.NbrOfConversion = 5;
   hadc1.Init.DMAContinuousRequests = DISABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   if (HAL_ADC_Init(&hadc1) != HAL_OK)
   {
     Error_Handler();
@@ -341,7 +349,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_5;
+  sConfig.Channel = ADC_CHANNEL_2;
   sConfig.Rank = 3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
@@ -350,8 +358,17 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_6;
+  sConfig.Channel = ADC_CHANNEL_3;
   sConfig.Rank = 4;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Rank = 5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -575,7 +592,7 @@ void LCD_Task(void *argument)
 {
 	while(1)
 	{
-		vTaskDelay(pdMS_TO_TICKS(1));
+		vTaskDelay(pdMS_TO_TICKS(10));
 	}
 }
 
@@ -609,24 +626,29 @@ void Button_Task(void *argument)
 
 void ADC_Task(void *pvParameters)
 {
-    for (;;) {
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);  // Wait for DMA complete
-        RC_Input_t input;
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, ADC_CHANNEL_COUNT);
+	RC_Input_t input;
+    for (;;)
+    {
 
-        // Use adc_buffer[] safely here
-        input.throttle = adc_buffer[0];
-        input.yaw      = adc_buffer[1];
-        input.pitch    = adc_buffer[2];
-        input.roll     = adc_buffer[3];
+    	if(xSemaphoreTake(xADCSem, portMAX_DELAY)==pdTRUE)
+    	{
 
+			input.throttle = adc_buffer[0];
+			input.roll      = adc_buffer[1];
+			input.pitch    = adc_buffer[2];
+			input.yaw     = adc_buffer[3];
 
-        //rccommand_process(&input);
-        const char *cmdStr = rccommand_process(&input);
-        if (cmdStr != NULL)
-        {
-          // Gửi chuỗi vào queue
-             xQueueOverwrite(commandQueue, cmdStr);
-        }
+			HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buffer, ADC_CHANNEL_COUNT);
+    	}
+    	rccommand_process(&input,cmdStr);
+
+    	/*if (cmdStr != NULL)
+    	{
+    	   xQueueOverwrite(commandQueue, cmdStr);
+    	}*/
+
+        vTaskDelay(pdMS_TO_TICKS(10));
 }
 
 }

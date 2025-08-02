@@ -17,17 +17,29 @@ void rccommand_init(void)
     lastCmd = RC_CMD_NONE;
 }
 
-const char* rccommand_process(const RC_Input_t *input)
+void rccommand_process(const RC_Input_t *input, char *buf )
 {
     RC_Command_t cmd = RC_CMD_NONE;
+
+    if (input->throttle > CENTER && input->pitch >CENTER && input->roll >CENTER && input->yaw > CENTER)
+    {
+
+    }
+
 
     // Throttle (UP/DOWN)
     if (input->throttle > CENTER + THRESHOLD)
         cmd |= RC_CMD_UP;
     else if (input->throttle < CENTER - THRESHOLD)
-        cmd |= RC_CMD_DOWN;
+        cmd = RC_CMD_DOWN;
 
-    // Yaw (rotate)
+    // Roll (LEFT/RIGHT)
+    if (input->roll > CENTER + THRESHOLD)
+        cmd |= RC_CMD_RIGHT;
+    else if (input->roll < CENTER - THRESHOLD)
+        cmd |= RC_CMD_LEFT;
+
+    // Yaw (ROTATE)
     if (input->yaw > CENTER + THRESHOLD)
         cmd |= RC_CMD_YAW_RIGHT;
     else if (input->yaw < CENTER - THRESHOLD)
@@ -37,46 +49,39 @@ const char* rccommand_process(const RC_Input_t *input)
     if (input->pitch > CENTER + THRESHOLD)
         cmd |= RC_CMD_FORWARD;
     else if (input->pitch < CENTER - THRESHOLD)
+    {
         cmd |= RC_CMD_BACKWARD;
+    }
 
-    // Roll (LEFT/RIGHT)
-    if (input->roll > CENTER + THRESHOLD)
-        cmd |= RC_CMD_RIGHT;
-    else if (input->roll < CENTER - THRESHOLD)
-        cmd |= RC_CMD_LEFT;
-
-    static char buf[64];
         buf[0] = '\0';
-        strcat(buf, "CMD:");
+        //strcat(buf, "CMD:");
 
-        if (cmd == RC_CMD_NONE) {
+        if (cmd == RC_CMD_NONE)
+        {
             strcat(buf, "STOP");
-        } else {
+        }
+        else
+        {
+            if (cmd == RC_CMD_UP)         strcat(buf, "UP|");
+            if (cmd == RC_CMD_DOWN)       strcat(buf, "DOWN|");
+            if (cmd == RC_CMD_LEFT)       strcat(buf, "LEFT|");
+            if (cmd == RC_CMD_RIGHT)      strcat(buf, "RIGHT|");
+
+            if (cmd == RC_CMD_FORWARD)    strcat(buf, "FORWARD|");
+            if (cmd == RC_CMD_BACKWARD)   strcat(buf, "BACKWARD|");
+            if (cmd == RC_CMD_YAW_LEFT)   strcat(buf, "YAW_LEFT|");
+            if (cmd == RC_CMD_YAW_RIGHT)  strcat(buf, "YAW_RIGHT|");
+
             if (cmd & RC_CMD_UP)         strcat(buf, "UP|");
             if (cmd & RC_CMD_DOWN)       strcat(buf, "DOWN|");
             if (cmd & RC_CMD_LEFT)       strcat(buf, "LEFT|");
             if (cmd & RC_CMD_RIGHT)      strcat(buf, "RIGHT|");
-            if (cmd & RC_CMD_FORWARD)    strcat(buf, "FORWARD|");
-            if (cmd & RC_CMD_BACKWARD)   strcat(buf, "BACKWARD|");
-            if (cmd & RC_CMD_YAW_LEFT)   strcat(buf, "YAW_LEFT|");
-            if (cmd & RC_CMD_YAW_RIGHT)  strcat(buf, "YAW_RIGHT|");
 
             size_t len = strlen(buf);
             if (buf[len - 1] == '|') buf[len - 1] = '\0';
         }
 
         strcat(buf, "\n");
-
-        // Chỉ trả chuỗi nếu có thay đổi
-        if (cmd != lastCmd)
-        {
-            lastCmd = cmd;
-            return buf;
-        }
-        else
-        {
-            return NULL;
-        }
 }
 
 
