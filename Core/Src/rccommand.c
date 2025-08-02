@@ -21,17 +21,21 @@ void rccommand_process(const RC_Input_t *input, char *buf )
 {
     RC_Command_t cmd = RC_CMD_NONE;
 
-    if (input->throttle > CENTER && input->pitch >CENTER && input->roll >CENTER && input->yaw > CENTER)
+    if ((input->throttle >= CENTER - 300 && input->throttle <= CENTER + 300) &&
+        (input->yaw      >= CENTER - 300 && input->yaw      <= CENTER + 300) &&
+        (input->pitch    >= CENTER - 300 && input->pitch    <= CENTER + 300) &&
+        (input->roll     >= CENTER - 300 && input->roll     <= CENTER + 300))
     {
-
+        cmd = RC_CMD_NONE;
     }
 
-
     // Throttle (UP/DOWN)
+    cmd &=~((1<<0)|(1<<1));
+    cmd &=~((1<<2)|(1<<3));
     if (input->throttle > CENTER + THRESHOLD)
         cmd |= RC_CMD_UP;
     else if (input->throttle < CENTER - THRESHOLD)
-        cmd = RC_CMD_DOWN;
+        cmd |= RC_CMD_DOWN;
 
     // Roll (LEFT/RIGHT)
     if (input->roll > CENTER + THRESHOLD)
@@ -67,10 +71,10 @@ void rccommand_process(const RC_Input_t *input, char *buf )
             if (cmd == RC_CMD_LEFT)       strcat(buf, "LEFT|");
             if (cmd == RC_CMD_RIGHT)      strcat(buf, "RIGHT|");
 
-            if (cmd == RC_CMD_FORWARD)    strcat(buf, "FORWARD|");
-            if (cmd == RC_CMD_BACKWARD)   strcat(buf, "BACKWARD|");
-            if (cmd == RC_CMD_YAW_LEFT)   strcat(buf, "YAW_LEFT|");
-            if (cmd == RC_CMD_YAW_RIGHT)  strcat(buf, "YAW_RIGHT|");
+            if (cmd == RC_CMD_FORWARD)    strcat(buf, "FW|");
+            if (cmd == RC_CMD_BACKWARD)   strcat(buf, "BW|");
+            if (cmd == RC_CMD_YAW_LEFT)   strcat(buf, "YL|");
+            if (cmd == RC_CMD_YAW_RIGHT)  strcat(buf, "YR|");
 
             if (cmd & RC_CMD_UP)         strcat(buf, "UP|");
             if (cmd & RC_CMD_DOWN)       strcat(buf, "DOWN|");
