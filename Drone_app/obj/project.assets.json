@@ -1,0 +1,237 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0-windows7.0": {
+      "FontAwesome.Sharp/6.6.0": {
+        "type": "package",
+        "compile": {
+          "lib/net8.0-windows7.0/FontAwesome.Sharp.dll": {}
+        },
+        "runtime": {
+          "lib/net8.0-windows7.0/FontAwesome.Sharp.dll": {}
+        },
+        "frameworkReferences": [
+          "Microsoft.WindowsDesktop.App"
+        ]
+      },
+      "GumroadLicensing/1.0.3": {
+        "type": "package",
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.1"
+        },
+        "compile": {
+          "lib/net40/GumroadLicensing.dll": {}
+        },
+        "runtime": {
+          "lib/net40/GumroadLicensing.dll": {}
+        }
+      },
+      "Kimtoo.BindingProvider/1.2.7": {
+        "type": "package",
+        "dependencies": {
+          "GumroadLicensing": "1.0.3"
+        },
+        "compile": {
+          "lib/net451/Kimtoo.BindingProvider.dll": {}
+        },
+        "runtime": {
+          "lib/net451/Kimtoo.BindingProvider.dll": {}
+        }
+      },
+      "Newtonsoft.Json/13.0.1": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/netstandard2.0/Newtonsoft.Json.dll": {
+            "related": ".xml"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FontAwesome.Sharp/6.6.0": {
+      "sha512": "bJCb2x73UC1nD9+9iMLaUy6Ujf9Pf+buL6FHwVnaoDYT4CQNLazz59hO5gQ0+SMSW0G+ZXmjjShOYr3Jn2UZiw==",
+      "type": "package",
+      "path": "fontawesome.sharp/6.6.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "fontawesome.sharp.6.6.0.nupkg.sha512",
+        "fontawesome.sharp.nuspec",
+        "lib/net472/FontAwesome.Sharp.dll",
+        "lib/net48/FontAwesome.Sharp.dll",
+        "lib/net6.0-windows7.0/FontAwesome.Sharp.dll",
+        "lib/net7.0-windows7.0/FontAwesome.Sharp.dll",
+        "lib/net8.0-windows7.0/FontAwesome.Sharp.dll",
+        "lib/netcoreapp3.1/FontAwesome.Sharp.dll"
+      ]
+    },
+    "GumroadLicensing/1.0.3": {
+      "sha512": "FZuR2d4kVhWe0ODfXZ6m3QRo3EeMEAdHCGWgWwg1euM2RYytkzBsR0EfwgInnxfj9Hir3kAyuOnHNpymmUl2ZA==",
+      "type": "package",
+      "path": "gumroadlicensing/1.0.3",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "gumroadlicensing.1.0.3.nupkg.sha512",
+        "gumroadlicensing.nuspec",
+        "lib/Assets/icon.png",
+        "lib/net40/GumroadLicensing.dll"
+      ]
+    },
+    "Kimtoo.BindingProvider/1.2.7": {
+      "sha512": "KkAzdiCPkA8r/cKnwayaxkZ8VGRPF1uF06MT+lz8lLx1hZ9DpZJCeLRWPR1CRpuPS1wVzF30iHCudeoAJSNwrQ==",
+      "type": "package",
+      "path": "kimtoo.bindingprovider/1.2.7",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "kimtoo.bindingprovider.1.2.7.nupkg.sha512",
+        "kimtoo.bindingprovider.nuspec",
+        "lib/Assets/kt-logo.png",
+        "lib/net451/Kimtoo.BindingProvider.dll"
+      ]
+    },
+    "Newtonsoft.Json/13.0.1": {
+      "sha512": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A==",
+      "type": "package",
+      "path": "newtonsoft.json/13.0.1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.md",
+        "lib/net20/Newtonsoft.Json.dll",
+        "lib/net20/Newtonsoft.Json.xml",
+        "lib/net35/Newtonsoft.Json.dll",
+        "lib/net35/Newtonsoft.Json.xml",
+        "lib/net40/Newtonsoft.Json.dll",
+        "lib/net40/Newtonsoft.Json.xml",
+        "lib/net45/Newtonsoft.Json.dll",
+        "lib/net45/Newtonsoft.Json.xml",
+        "lib/netstandard1.0/Newtonsoft.Json.dll",
+        "lib/netstandard1.0/Newtonsoft.Json.xml",
+        "lib/netstandard1.3/Newtonsoft.Json.dll",
+        "lib/netstandard1.3/Newtonsoft.Json.xml",
+        "lib/netstandard2.0/Newtonsoft.Json.dll",
+        "lib/netstandard2.0/Newtonsoft.Json.xml",
+        "newtonsoft.json.13.0.1.nupkg.sha512",
+        "newtonsoft.json.nuspec",
+        "packageIcon.png"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0-windows7.0": [
+      "FontAwesome.Sharp >= 6.6.0",
+      "Kimtoo.BindingProvider >= 1.2.7"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\GIGABYTE\\.nuget\\packages\\": {},
+    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\GIGABYTE\\source\\repos\\Drone_app\\Drone_app\\Drone_app.csproj",
+      "projectName": "Drone_app",
+      "projectPath": "C:\\Users\\GIGABYTE\\source\\repos\\Drone_app\\Drone_app\\Drone_app.csproj",
+      "packagesPath": "C:\\Users\\GIGABYTE\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\GIGABYTE\\source\\repos\\Drone_app\\Drone_app\\obj\\",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+      ],
+      "configFilePaths": [
+        "C:\\Users\\GIGABYTE\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0-windows"
+      ],
+      "sources": {
+        "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0-windows7.0": {
+          "targetAlias": "net8.0-windows",
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0-windows7.0": {
+        "targetAlias": "net8.0-windows",
+        "dependencies": {
+          "FontAwesome.Sharp": {
+            "target": "Package",
+            "version": "[6.6.0, )"
+          },
+          "Kimtoo.BindingProvider": {
+            "target": "Package",
+            "version": "[1.2.7, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WindowsForms": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.400/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'GumroadLicensing 1.0.3' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "GumroadLicensing",
+      "targetGraphs": [
+        "net8.0-windows7.0"
+      ]
+    },
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'Kimtoo.BindingProvider 1.2.7' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.",
+      "libraryId": "Kimtoo.BindingProvider",
+      "targetGraphs": [
+        "net8.0-windows7.0"
+      ]
+    }
+  ]
+}
