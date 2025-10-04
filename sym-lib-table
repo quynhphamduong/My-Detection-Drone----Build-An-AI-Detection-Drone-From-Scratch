@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "TP5100")(type "KiCad")(uri "${KIPRJMOD}/TP5100.kicad_sym")(options "")(descr ""))
+  (lib (name "CDRH127_LDNP-221MC")(type "KiCad")(uri "D:/KICAD/RC_ver2/CDRH127_LDNP-221MC/CDRH127_LDNP-221MC.kicad_sym")(options "")(descr ""))
+)

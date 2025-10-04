@@ -1,0 +1,105 @@
+(footprint "DC5521 FEMALE"
+	(version 20240108)
+	(generator "pcbnew")
+	(generator_version "8.0")
+	(layer "F.Cu")
+	(property "Reference" ""
+		(at -1.0795 -10.36 0)
+		(layer "F.SilkS")
+		(uuid "b4103e08-3d3f-4b7f-9166-8dc90c87df50")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "DC5521 FEMALE"
+		(at -1.0795 2.232 0)
+		(layer "F.Fab")
+		(uuid "47b57020-3137-4f41-993a-8202ab50724e")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Footprint" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "a3b6de6e-fe72-48b3-8a0f-bd937d670f81")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "6f7c1c40-87e6-498d-ba33-ccf4cac7cfb4")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "eb60cd8f-cb8e-403c-b012-e549e21dcff4")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_rect
+		(start -8.255 -9.398)
+		(end 6.096 1.27)
+		(stroke
+			(width 0.254)
+			(type default)
+		)
+		(fill none)
+		(layer "F.SilkS")
+		(uuid "46e7cfb9-b68f-45af-a68b-a90d84dc434c")
+	)
+	(pad "1" thru_hole rect
+		(at 4.7 -4.7 90)
+		(size 4 2.3)
+		(drill oval 3.36 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.0508)
+		(thermal_bridge_angle 0)
+		(uuid "5534a262-929c-42e6-80ed-4513ebdf9c3d")
+	)
+	(pad "2" thru_hole rect
+		(at -3.4999 -4.7 90)
+		(size 4 2)
+		(drill oval 3.36 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.0508)
+		(thermal_bridge_angle 0)
+		(uuid "fbb3fc51-b07b-4a51-ad47-308775032acb")
+	)
+	(pad "2" thru_hole rect
+		(at 0 0)
+		(size 4 2)
+		(drill oval 3.36 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(solder_mask_margin 0.0508)
+		(thermal_bridge_angle 0)
+		(uuid "58017930-a9cf-4072-87d3-f439c5c10946")
+	)
+)
