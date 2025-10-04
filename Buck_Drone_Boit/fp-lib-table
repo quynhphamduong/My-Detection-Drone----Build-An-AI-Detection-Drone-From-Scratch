@@ -1,0 +1,5 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "USB_A SnapEDA")(type "KiCad")(uri "D:/KICAD/Version2_BuckConvert/LIB/USB1046-GF-0190-L-B-A_REVB4")(options "")(descr ""))
+  (lib (name "LM358DT")(type "KiCad")(uri "D:/KICAD/Version2_BuckConvert/LIB/LM358DT")(options "")(descr ""))
+)

@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "USB_A_SnapEDA")(type "KiCad")(uri "D:/KICAD/Version2_BuckConvert/LIB/USB1046-GF-0190-L-B-A_REVB4/TypeA_USB.kicad_sym")(options "")(descr ""))
+)
