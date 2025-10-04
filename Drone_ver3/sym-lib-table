@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "DFROBOT_BNO055")(type "KiCad")(uri "D:/KICAD/Drone_ver3/DFRobot BNO055/DFROBOT_BNO055.kicad_sym")(options "")(descr ""))
+)
