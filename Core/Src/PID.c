@@ -190,6 +190,7 @@ float SelfTunningPUpdate(AdaptivePControllers_t *self_tunning,float measurement,
 	}
 
 	self_tunning->uk=self_tunning->Kp*self_tunning->et;
+	count++;
 	return self_tunning->uk;
 
 }
