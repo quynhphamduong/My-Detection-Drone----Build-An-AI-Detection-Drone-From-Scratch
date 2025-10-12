@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <math.h>
 
 #define USING_CLAMPING_SECTION 0
 //let's begin
@@ -53,9 +54,49 @@ typedef struct {
 }PIDControllers_Typedef;
 
 
+struct AdaptiveP
+{
+	float Kp;
+
+	float et;// sai so tong
+
+	float yk;
+	float yk1;
+	float yk2;
+
+	float uk;
+	float uk1;
+	float uk2;
+
+
+	float a1;
+	float a2;
+	float b1;
+	float b2;
+
+	float P11,P12,P13,P14;
+	float P21,P22,P23,P24;
+	float P31,P32,P33,P34;
+	float P41,P42,P43,P44;
+
+	float L11,L21,L31,L41;
+
+	float epsilon;
+
+
+	float ref;
+
+	float lamda;
+
+};
+
+typedef struct AdaptiveP AdaptivePControllers_t;
+
 void pidControllersInit(PIDControllers_Typedef* pid,float Kp,float Ki,float Kd,float to,float T,float upper_satuaration,float lower_satuaration);
 float pidUpdate(PIDControllers_Typedef* pid,float measurement,float input);
 void AdjustPIDParams(PIDControllers_Typedef* pid,float Kp,float Ki,float Kd);
+void AdaptivePControllersInit(AdaptivePControllers_t *self_tunning,float Lamda);
+float SelfTunningPUpdate(AdaptivePControllers_t *self_tunning,float measurement, float ref);
 #ifdef __cplusplus
 }
 #endif

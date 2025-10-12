@@ -1,3 +1,5 @@
 ../Core/Src/PID.c:10:6:pidControllersInit	40	static
 ../Core/Src/PID.c:39:6:AdjustPIDParams	24	static
 ../Core/Src/PID.c:46:7:pidUpdate	24	static
+../Core/Src/PID.c:116:6:AdaptivePControllersInit	16	static
+../Core/Src/PID.c:147:7:SelfTunningPUpdate	32	static

@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2025 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2025 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -36,10 +36,10 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
-#define ADC_MAX     4095
-#define PWM_MIN     1000     // 1000 us
-#define PWM_MAX     2000     // 2000 us
-#define DEADZONE    50
+#define ADC_MAX 4095
+#define PWM_MIN 1000 // 1000 us
+#define PWM_MAX 2000 // 2000 us
+#define DEADZONE 50
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -72,7 +72,7 @@ osThreadId defaultTaskHandle;
 uint8_t spi_rx[32];
 uint8_t uart2_rx[128];
 uint32_t adc_value;
-
+bno055_vector_t euler, gyro;
 
 Motor_speed_Typedef speed;
 PIDControllers_Typedef pitch;
@@ -86,16 +86,14 @@ PIDControllers_Typedef high;
 Drone_Calculation_Typedef calculation;
 Drone_Control_Typedef control;
 
-NRF_HandleTypeDef nrf={
-	CS2_GPIO_Port,
-	CE2_GPIO_Port,
-	IRQ2_GPIO_Port,
-	CS2_Pin,
-	CE2_Pin,
-	IRQ2_Pin,
-	&hspi2
-};
-
+NRF_HandleTypeDef nrf = {
+    CS2_GPIO_Port,
+    CE2_GPIO_Port,
+    IRQ2_GPIO_Port,
+    CS2_Pin,
+    CE2_Pin,
+    IRQ2_Pin,
+    &hspi2};
 
 xTaskHandle ESC_Handle;
 xTaskHandle NRF_Handle;
@@ -111,8 +109,6 @@ xQueueHandle xBMPQueue;
 xSemaphoreHandle xAdcSem;
 xSemaphoreHandle xUSART2Sem;
 
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -127,7 +123,7 @@ static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART6_UART_Init(void);
-void StartDefaultTask(void const * argument);
+void StartDefaultTask(void const *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -135,26 +131,25 @@ void StartDefaultTask(void const * argument);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-	 if (hadc->Instance == ADC1)
-	    {
-	        BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-	        xSemaphoreGiveFromISR(xAdcSem, &xHigherPriorityTaskWoken);
-	        portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-	    }
+  if (hadc->Instance == ADC1)
+  {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(xAdcSem, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  }
 }
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
-    if(huart->Instance == USART2)
-    {
-    	 BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    	 xSemaphoreGiveFromISR(xUSART2Sem, &xHigherPriorityTaskWoken);
-    	 portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-    }
+  if (huart->Instance == USART2)
+  {
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(xUSART2Sem, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  }
 }
-
 
 void ESC_Task(void *argument);
 void NRF_Task(void *argument);
@@ -165,9 +160,9 @@ void ZIGBEE_Task(void *argument);
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
@@ -204,14 +199,14 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
-	float sample=powf(10,-3);
-	pidControllersInit(&yaw, 20, 15, 5,0.1,sample,0.1,-0.1);
-	pidControllersInit(&yaw_rate, 100, 50,10, 0.1,sample,1500,-1500);
-	pidControllersInit(&pitch, 20, 15,5, 0.1,sample,0.1,-0.1);
-	pidControllersInit(&pitch_rate, 100, 50,10, 0.1,sample,1500,-1500);
-	pidControllersInit(&roll, 20, 15,5 ,0.1,sample,0.1,-0.1);
-	pidControllersInit(&roll_rate, 100, 50,10, 0.1,sample,1500,-1500);
-	pidControllersInit(&high, 50, 25,10 ,0.1,sample,6000,0);
+  float sample = powf(10, -3);
+  pidControllersInit(&yaw, 20, 15, 5, 0.1, sample, 0.1, -0.1);
+  pidControllersInit(&yaw_rate, 100, 50, 10, 0.1, sample, 1500, -1500);
+  pidControllersInit(&pitch, 20, 15, 5, 0.1, sample, 0.1, -0.1);
+  pidControllersInit(&pitch_rate, 100, 50, 10, 0.1, sample, 1500, -1500);
+  pidControllersInit(&roll, 20, 15, 5, 0.1, sample, 0.1, -0.1);
+  pidControllersInit(&roll_rate, 100, 50, 10, 0.1, sample, 1500, -1500);
+  pidControllersInit(&high, 50, 25, 10, 0.1, sample, 6000, 0);
 
   /* USER CODE END 2 */
 
@@ -221,15 +216,15 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
-	 xAdcSem=xSemaphoreCreateBinary();
-	 xUSART2Sem=xSemaphoreCreateBinary();
+  xAdcSem = xSemaphoreCreateBinary();
+  xUSART2Sem = xSemaphoreCreateBinary();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
-	 xReceivedADC=xQueueCreate(4,sizeof(uint32_t));
-	 xBNOQueue=xQueueCreate(2,sizeof(bno055_vector_t));
-	 xBMPQueue=xQueueCreate(1,sizeof(float));
+  xReceivedADC = xQueueCreate(4, sizeof(uint32_t));
+  xBNOQueue = xQueueCreate(2, sizeof(bno055_vector_t));
+  xBMPQueue = xQueueCreate(1, sizeof(float));
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -243,12 +238,12 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(ESC_Task, "ESC", 256,NULL,1, &ESC_Handle);
+  xTaskCreate(ESC_Task, "ESC", 256, NULL, 1, &ESC_Handle);
   xTaskCreate(NRF_Task, "NRF", 256, NULL, 0, &NRF_Handle);
   xTaskCreate(BNO_Task, "BNO", 256, NULL, 1, &BNO_Handle);
   xTaskCreate(BMP_Task, "BMP", 256, NULL, 1, &BMP_Handle);
-  xTaskCreate(ADC_Task,"ADC",256,NULL,0,&ADC_Handle);
-  xTaskCreate(ZIGBEE_Task,"ZIGBEE",256, NULL,0,&ZIGBEE_Handle);
+  xTaskCreate(ADC_Task, "ADC", 256, NULL, 0, &ADC_Handle);
+  xTaskCreate(ZIGBEE_Task, "ZIGBEE", 256, NULL, 0, &ZIGBEE_Handle);
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -268,22 +263,22 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-  */
+   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -298,9 +293,8 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -313,10 +307,10 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief ADC1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief ADC1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_ADC1_Init(void)
 {
 
@@ -331,7 +325,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE END ADC1_Init 1 */
 
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-  */
+   */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -350,7 +344,7 @@ static void MX_ADC1_Init(void)
   }
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-  */
+   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -361,14 +355,13 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
-
 }
 
 /**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief I2C1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_I2C1_Init(void)
 {
 
@@ -395,14 +388,13 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
-  * @brief I2C2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief I2C2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_I2C2_Init(void)
 {
 
@@ -429,14 +421,13 @@ static void MX_I2C2_Init(void)
   /* USER CODE BEGIN I2C2_Init 2 */
 
   /* USER CODE END I2C2_Init 2 */
-
 }
 
 /**
-  * @brief SPI2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief SPI2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_SPI2_Init(void)
 {
 
@@ -467,14 +458,13 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
-
 }
 
 /**
-  * @brief TIM3 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief TIM3 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_TIM3_Init(void)
 {
 
@@ -491,7 +481,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 42000-1;
+  htim3.Init.Period = 42000 - 1;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
@@ -528,14 +518,13 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 2 */
   HAL_TIM_MspPostInit(&htim3);
-
 }
 
 /**
-  * @brief USART1 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief USART1 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_USART1_UART_Init(void)
 {
 
@@ -561,14 +550,13 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
-
 }
 
 /**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief USART2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_USART2_UART_Init(void)
 {
 
@@ -594,14 +582,13 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
-
 }
 
 /**
-  * @brief USART6 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief USART6 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_USART6_UART_Init(void)
 {
 
@@ -627,12 +614,11 @@ static void MX_USART6_UART_Init(void)
   /* USER CODE BEGIN USART6_Init 2 */
 
   /* USER CODE END USART6_Init 2 */
-
 }
 
 /**
-  * Enable DMA controller clock
-  */
+ * Enable DMA controller clock
+ */
 static void MX_DMA_Init(void)
 {
 
@@ -643,14 +629,13 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -668,7 +653,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, CS2_Pin|CE2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, CS2_Pin | CE2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
@@ -678,7 +663,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CS2_Pin CE2_Pin */
-  GPIO_InitStruct.Pin = CS2_Pin|CE2_Pin;
+  GPIO_InitStruct.Pin = CS2_Pin | CE2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -698,147 +683,141 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void ESC_Task(void *argument)
 {
-	bno055_vector_t euler,gyro;
-	float altitude;
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
-	Calibration_RTOS(&htim3);
-	while(1)
-	{
 
-				if(xQueueReceive(xBNOQueue,&euler,portMAX_DELAY)==pdTRUE)
-				{
+  float altitude;
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+  Calibration_RTOS(&htim3);
+  while (1)
+  {
 
-				}
-				if(xQueueReceive(xBNOQueue,&gyro,portMAX_DELAY)==pdTRUE)
-				{
+    if (xQueueReceive(xBNOQueue, &euler, portMAX_DELAY) == pdTRUE)
+    {
+    }
+    if (xQueueReceive(xBNOQueue, &gyro, portMAX_DELAY) == pdTRUE)
+    {
+    }
+    if (xQueueReceive(xBMPQueue, &altitude, portMAX_DELAY) == pdTRUE)
+    {
+    }
 
-				}
-				if(xQueueReceive(xBMPQueue,&altitude,portMAX_DELAY)==pdTRUE)
-				{
+    pidUpdate(&pitch, euler.z, calculation.picth_reference);
+    calculation.picth_rate_reference = pitch.u;
+    pidUpdate(&pitch_rate, gyro.z, calculation.picth_rate_reference);
+    pidUpdate(&roll, euler.y, calculation.roll_reference);
+    pidUpdate(&roll_rate, gyro.y, calculation.roll_rate_reference);
+    pidUpdate(&yaw, euler.x, calculation.yaw_reference);
+    calculation.yaw_rate_reference = yaw.u;
+    pidUpdate(&yaw_rate, gyro.x, calculation.yaw_rate_reference);
+    pidUpdate(&high, altitude, calculation.high_reference);
 
-				}
-
-				pidUpdate(&pitch, euler.z, calculation.picth_reference);
-				calculation.picth_rate_reference=pitch.u;
-				pidUpdate(&pitch_rate, gyro.z, calculation.picth_rate_reference);
-				pidUpdate(&roll, euler.y, calculation.roll_reference);
-				pidUpdate(&roll_rate,gyro.y, calculation.roll_rate_reference);
-				pidUpdate(&yaw, euler.x, calculation.yaw_reference);
-				calculation.yaw_rate_reference=yaw.u;
-				pidUpdate(&yaw_rate, gyro.x, calculation.yaw_rate_reference);
-				pidUpdate(&high, altitude, calculation.high_reference);
-
-				speed.speed1=(uint32_t)high.u-(uint32_t)pitch_rate.u+roll_rate.u-yaw_rate.u;
-				speed.speed2=(uint32_t)high.u+(uint32_t)pitch_rate.u+roll_rate.u+yaw_rate.u;
-				speed.speed3=(uint32_t)high.u+(uint32_t)pitch_rate.u-roll_rate.u-yaw_rate.u;
-				speed.speed4=(uint32_t)high.u-(uint32_t)pitch_rate.u-roll_rate.u+yaw_rate.u;
-				Control4Motor(&htim3, &speed);
-			vTaskDelay(pdMS_TO_TICKS(1));
-
-	}
+    speed.speed1 = (uint32_t)high.u - (uint32_t)pitch_rate.u + roll_rate.u - yaw_rate.u;
+    speed.speed2 = (uint32_t)high.u + (uint32_t)pitch_rate.u + roll_rate.u + yaw_rate.u;
+    speed.speed3 = (uint32_t)high.u + (uint32_t)pitch_rate.u - roll_rate.u - yaw_rate.u;
+    speed.speed4 = (uint32_t)high.u - (uint32_t)pitch_rate.u - roll_rate.u + yaw_rate.u;
+    Control4Motor(&htim3, &speed);
+    vTaskDelay(pdMS_TO_TICKS(1));
+  }
 }
 
 void NRF_Task(void *argument)
 {
-	RX_Enhanced_ShockBurst_Config_RTOS(&nrf, 0xA2A2A2A2A2);
-	while(1)
-	{
-		if(RX_Communication(&nrf, spi_rx))
-		{
-
-		}
-		vTaskDelay(pdMS_TO_TICKS(10));
-	}
+  RX_Enhanced_ShockBurst_Config_RTOS(&nrf, 0xA2A2A2A2A2);
+  while (1)
+  {
+    if (RX_Communication(&nrf, spi_rx))
+    {
+    }
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }
 
 void BNO_Task(void *argument)
 {
-	bno055_vector_t euler_t,gyro_t;
-	bno055_assignI2C(&hi2c1);
-	bno055_setup();
-	bno055_setOperationModeNDOF();
-	while(1)
-	{
-		gyro_t=bno055_getVectorGyroscope();
-		euler_t=bno055_getVectorEuler();
-		xQueueSend(xBNOQueue,&euler_t,portMAX_DELAY);
-		xQueueSend(xBNOQueue,&gyro_t,portMAX_DELAY);
-		vTaskDelay(pdMS_TO_TICKS(10));
-	}
+  bno055_vector_t euler_t, gyro_t;
+  bno055_assignI2C(&hi2c1);
+  bno055_setup();
+  bno055_setOperationModeNDOF();
+  while (1)
+  {
+    gyro_t = bno055_getVectorGyroscope();
+    euler_t = bno055_getVectorEuler();
+    xQueueSend(xBNOQueue, &euler_t, portMAX_DELAY);
+    xQueueSend(xBNOQueue, &gyro_t, portMAX_DELAY);
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }
 
 void BMP_Task(void *argument)
 {
-	BMP180_Handle_t bmp180;
-	float altitude_t;
-	if (BMP180_Init(&bmp180, &hi2c2, 3) != HAL_OK) // OSS = 3 (highest resolution)
-	  {
-	  }
-	  while (1)
-	  {
-	    altitude_t = BMP180_ReadAltitude(&bmp180, BMP180_STD_ATM_PRESS); // 101325 Pa
-	    xQueueSend(xBMPQueue,&altitude_t,portMAX_DELAY);
-	    vTaskDelay(pdMS_TO_TICKS(10));
-	  }
+  BMP180_Handle_t bmp180;
+  float altitude_t;
+  if (BMP180_Init(&bmp180, &hi2c2, 3) != HAL_OK) // OSS = 3 (highest resolution)
+  {
+  }
+  while (1)
+  {
+    altitude_t = BMP180_ReadAltitude(&bmp180, BMP180_STD_ATM_PRESS); // 101325 Pa
+    xQueueSend(xBMPQueue, &altitude_t, portMAX_DELAY);
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
 }
 
 void ADC_Task(void *argument)
 {
-	HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
-	while(1)
-	{
-		if (xSemaphoreTake(xAdcSem, portMAX_DELAY) == pdTRUE)
-		{
-			HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
-		}
-	}
+  HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
+  while (1)
+  {
+    if (xSemaphoreTake(xAdcSem, portMAX_DELAY) == pdTRUE)
+    {
+      HAL_ADC_Start_DMA(&hadc1, &adc_value, 1);
+    }
+  }
 }
 
 void ZIGBEE_Task(void *argument)
 {
-	HAL_UART_Receive_IT(&huart2, uart2_rx, 5);
-	while(1)
-	{
-		if(xSemaphoreTake(xUSART2Sem,portMAX_DELAY)==pdTRUE)
-		{
-			HAL_UART_Receive_IT(&huart2, uart2_rx, 5);
-
-		}
-	}
+  HAL_UART_Receive_IT(&huart2, uart2_rx, 5);
+  while (1)
+  {
+    if (xSemaphoreTake(xUSART2Sem, portMAX_DELAY) == pdTRUE)
+    {
+      HAL_UART_Receive_IT(&huart2, uart2_rx, 5);
+    }
+  }
 }
 
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
-  * @retval None
-  */
+ * @brief  Function implementing the defaultTask thread.
+ * @param  argument: Not used
+ * @retval None
+ */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
+void StartDefaultTask(void const *argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
-	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+    HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     osDelay(500);
   }
   /* USER CODE END 5 */
 }
 
 /**
-  * @brief  Period elapsed callback in non blocking mode
-  * @note   This function is called  when TIM1 interrupt took place, inside
-  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
-  * a global variable "uwTick" used as application time base.
-  * @param  htim : TIM handle
-  * @retval None
-  */
+ * @brief  Period elapsed callback in non blocking mode
+ * @note   This function is called  when TIM1 interrupt took place, inside
+ * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+ * a global variable "uwTick" used as application time base.
+ * @param  htim : TIM handle
+ * @retval None
+ */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
@@ -854,9 +833,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -868,14 +847,14 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */
