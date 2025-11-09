@@ -31,6 +31,7 @@
 #include "math.h"
 #include "stdio.h"
 #include "string.h"
+#include "stdlib.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -66,13 +67,21 @@ TIM_HandleTypeDef htim3;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart6;
+DMA_HandleTypeDef hdma_usart1_rx;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-uint8_t spi_rx[32];
-uint8_t uart2_rx[128];
+uint8_t uart2_rx[16];
+uint32_t high;
+
+
+#ifdef SIMULATION
+int pwm;
+#endif
+
 uint32_t adc_value;
-bno055_vector_t euler, gyro;
+
+float value[7];
 
 Motor_speed_Typedef speed;
 PIDControllers_Typedef pitch;
@@ -81,33 +90,35 @@ PIDControllers_Typedef roll;
 PIDControllers_Typedef roll_rate;
 PIDControllers_Typedef yaw;
 PIDControllers_Typedef yaw_rate;
-PIDControllers_Typedef high;
 
 Drone_Calculation_Typedef calculation;
 Drone_Control_Typedef control;
 
-NRF_HandleTypeDef nrf = {
-    CS2_GPIO_Port,
-    CE2_GPIO_Port,
-    IRQ2_GPIO_Port,
-    CS2_Pin,
-    CE2_Pin,
-    IRQ2_Pin,
-    &hspi2};
 
 xTaskHandle ESC_Handle;
 xTaskHandle NRF_Handle;
 xTaskHandle BNO_Handle;
 xTaskHandle BMP_Handle;
 xTaskHandle ADC_Handle;
+xTaskHandle USB_Handle;
 xTaskHandle ZIGBEE_Handle;
+xTaskHandle NEO7M_Handle;
+xTaskHandle GPS_Handle;
+xTaskHandle TCP_Handle;
 
 xQueueHandle xReceivedADC;
 xQueueHandle xBNOQueue;
 xQueueHandle xBMPQueue;
+xQueueHandle xGPSQueue;
+xQueueHandle xTCPMessage;
 
 xSemaphoreHandle xAdcSem;
+xSemaphoreHandle xUSART1Sem;
 xSemaphoreHandle xUSART2Sem;
+xSemaphoreHandle xUSART6Sem;
+
+xSemaphoreHandle xTCPSem;
+
 
 /* USER CODE END PV */
 
@@ -123,7 +134,7 @@ static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART6_UART_Init(void);
-void StartDefaultTask(void const *argument);
+void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -143,11 +154,23 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	if (huart->Instance == USART1)
+	{
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	xSemaphoreGiveFromISR(xUSART1Sem, &xHigherPriorityTaskWoken);
+	portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+	}
   if (huart->Instance == USART2)
   {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xSemaphoreGiveFromISR(xUSART2Sem, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+  }
+  if (huart->Instance==USART6)
+  {
+	  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	  xSemaphoreGiveFromISR(xUSART6Sem, &xHigherPriorityTaskWoken);
+	  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
   }
 }
 
@@ -156,13 +179,17 @@ void NRF_Task(void *argument);
 void BNO_Task(void *argument);
 void BMP_Task(void *argument);
 void ADC_Task(void *argument);
+void USB_UART_Task(void *argument);
 void ZIGBEE_Task(void *argument);
+void NEO7M_Task(void *argument);
+void GPS_DATA_Task(void *argument);
+void TCP_Message_Handling_Task(void *argument);
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
@@ -200,13 +227,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
   float sample = powf(10, -3);
-  pidControllersInit(&yaw, 20, 15, 5, 0.1, sample, 0.1, -0.1);
-  pidControllersInit(&yaw_rate, 100, 50, 10, 0.1, sample, 1500, -1500);
-  pidControllersInit(&pitch, 20, 15, 5, 0.1, sample, 0.1, -0.1);
-  pidControllersInit(&pitch_rate, 100, 50, 10, 0.1, sample, 1500, -1500);
-  pidControllersInit(&roll, 20, 15, 5, 0.1, sample, 0.1, -0.1);
-  pidControllersInit(&roll_rate, 100, 50, 10, 0.1, sample, 1500, -1500);
-  pidControllersInit(&high, 50, 25, 10, 0.1, sample, 6000, 0);
+  pidControllersInit(&yaw, 0, 0, 0, 0.1, sample, 360,-360);
+  pidControllersInit(&yaw_rate, 0, 0, 0, 0.1, sample, 1500, -1500);
+  pidControllersInit(&pitch, 0, 0, 0, 0.1, sample, 10, -10);
+  pidControllersInit(&pitch_rate, 0, 0, 0, 0.1, sample, 1500, -1500);
+  pidControllersInit(&roll, 0, 0, 0, 0.1, sample, 10, -10);
+  pidControllersInit(&roll_rate, 0,0, 0, 0.1, sample, 1500, -1500);
 
   /* USER CODE END 2 */
 
@@ -217,7 +243,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   xAdcSem = xSemaphoreCreateBinary();
+  xUSART1Sem = xSemaphoreCreateBinary();
   xUSART2Sem = xSemaphoreCreateBinary();
+  xUSART6Sem = xSemaphoreCreateBinary();
+  xTCPSem = xSemaphoreCreateMutex();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -225,6 +254,9 @@ int main(void)
   xReceivedADC = xQueueCreate(4, sizeof(uint32_t));
   xBNOQueue = xQueueCreate(2, sizeof(bno055_vector_t));
   xBMPQueue = xQueueCreate(1, sizeof(float));
+  xGPSQueue = xQueueCreate(128,sizeof(uint8_t));
+  xTCPMessage = xQueueCreate(128,sizeof(uint8_t));
+
   /* USER CODE END RTOS_TIMERS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -238,12 +270,16 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(ESC_Task, "ESC", 256, NULL, 1, &ESC_Handle);
-  xTaskCreate(NRF_Task, "NRF", 256, NULL, 0, &NRF_Handle);
+  xTaskCreate(ESC_Task, "ESC", 512, NULL, 1, &ESC_Handle);
+  xTaskCreate(TCP_Message_Handling_Task,"TCP",512,NULL,1,&TCP_Handle);
   xTaskCreate(BNO_Task, "BNO", 256, NULL, 1, &BNO_Handle);
   xTaskCreate(BMP_Task, "BMP", 256, NULL, 1, &BMP_Handle);
-  xTaskCreate(ADC_Task, "ADC", 256, NULL, 0, &ADC_Handle);
-  xTaskCreate(ZIGBEE_Task, "ZIGBEE", 256, NULL, 0, &ZIGBEE_Handle);
+  xTaskCreate(ADC_Task, "ADC", 256, NULL, 1, &ADC_Handle);
+  xTaskCreate(USB_UART_Task, "USB", 512, NULL, 2, &USB_Handle);
+  xTaskCreate(ZIGBEE_Task, "ZIGBEE", 256, NULL, 2, &ZIGBEE_Handle);
+  xTaskCreate(NEO7M_Task, "NEO7M", 256, NULL, 2, &NEO7M_Handle);
+  xTaskCreate(GPS_DATA_Task, "GPS", 256, NULL, 0, &GPS_Handle);
+
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -263,22 +299,22 @@ int main(void)
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Configure the main internal regulator output voltage
-   */
+  */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
+  * in the RCC_OscInitTypeDef structure.
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
@@ -293,8 +329,9 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -307,10 +344,10 @@ void SystemClock_Config(void)
 }
 
 /**
- * @brief ADC1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief ADC1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_ADC1_Init(void)
 {
 
@@ -325,7 +362,7 @@ static void MX_ADC1_Init(void)
   /* USER CODE END ADC1_Init 1 */
 
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
-   */
+  */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
@@ -344,7 +381,7 @@ static void MX_ADC1_Init(void)
   }
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
-   */
+  */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
   sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
@@ -355,13 +392,14 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
 }
 
 /**
- * @brief I2C1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_I2C1_Init(void)
 {
 
@@ -388,13 +426,14 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
- * @brief I2C2 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief I2C2 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_I2C2_Init(void)
 {
 
@@ -421,13 +460,14 @@ static void MX_I2C2_Init(void)
   /* USER CODE BEGIN I2C2_Init 2 */
 
   /* USER CODE END I2C2_Init 2 */
+
 }
 
 /**
- * @brief SPI2 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_SPI2_Init(void)
 {
 
@@ -458,13 +498,14 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
+
 }
 
 /**
- * @brief TIM3 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM3_Init(void)
 {
 
@@ -481,7 +522,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 42000 - 1;
+  htim3.Init.Period = 42000-1;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
@@ -518,13 +559,14 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 2 */
   HAL_TIM_MspPostInit(&htim3);
+
 }
 
 /**
- * @brief USART1 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USART1_UART_Init(void)
 {
 
@@ -550,13 +592,14 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
+
 }
 
 /**
- * @brief USART2 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USART2_UART_Init(void)
 {
 
@@ -582,13 +625,14 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
 }
 
 /**
- * @brief USART6 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief USART6 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_USART6_UART_Init(void)
 {
 
@@ -600,7 +644,7 @@ static void MX_USART6_UART_Init(void)
 
   /* USER CODE END USART6_Init 1 */
   huart6.Instance = USART6;
-  huart6.Init.BaudRate = 115200;
+  huart6.Init.BaudRate = 9600;
   huart6.Init.WordLength = UART_WORDLENGTH_8B;
   huart6.Init.StopBits = UART_STOPBITS_1;
   huart6.Init.Parity = UART_PARITY_NONE;
@@ -614,11 +658,12 @@ static void MX_USART6_UART_Init(void)
   /* USER CODE BEGIN USART6_Init 2 */
 
   /* USER CODE END USART6_Init 2 */
+
 }
 
 /**
- * Enable DMA controller clock
- */
+  * Enable DMA controller clock
+  */
 static void MX_DMA_Init(void)
 {
 
@@ -629,13 +674,17 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -653,7 +702,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, CS2_Pin | CE2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, CS2_Pin|CE2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PC13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
@@ -663,7 +712,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : CS2_Pin CE2_Pin */
-  GPIO_InitStruct.Pin = CS2_Pin | CE2_Pin;
+  GPIO_InitStruct.Pin = CS2_Pin|CE2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -684,7 +733,10 @@ static void MX_GPIO_Init(void)
 void ESC_Task(void *argument)
 {
 
+	bno055_vector_t euler, gyro;
   float altitude;
+
+
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
@@ -703,34 +755,25 @@ void ESC_Task(void *argument)
     {
     }
 
+    xSemaphoreTake(xTCPSem,portMAX_DELAY);
     pidUpdate(&pitch, euler.z, calculation.picth_reference);
     calculation.picth_rate_reference = pitch.u;
     pidUpdate(&pitch_rate, gyro.z, calculation.picth_rate_reference);
     pidUpdate(&roll, euler.y, calculation.roll_reference);
+    calculation.roll_rate_reference=roll.u;
     pidUpdate(&roll_rate, gyro.y, calculation.roll_rate_reference);
     pidUpdate(&yaw, euler.x, calculation.yaw_reference);
     calculation.yaw_rate_reference = yaw.u;
     pidUpdate(&yaw_rate, gyro.x, calculation.yaw_rate_reference);
-    pidUpdate(&high, altitude, calculation.high_reference);
 
-    speed.speed1 = (uint32_t)high.u - (uint32_t)pitch_rate.u + roll_rate.u - yaw_rate.u;
-    speed.speed2 = (uint32_t)high.u + (uint32_t)pitch_rate.u + roll_rate.u + yaw_rate.u;
-    speed.speed3 = (uint32_t)high.u + (uint32_t)pitch_rate.u - roll_rate.u - yaw_rate.u;
-    speed.speed4 = (uint32_t)high.u - (uint32_t)pitch_rate.u - roll_rate.u + yaw_rate.u;
+
+    speed.speed1 = high - (uint32_t)pitch_rate.u + (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
+    speed.speed2 = high + (uint32_t)pitch_rate.u + (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
+    speed.speed3 = high + (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
+    speed.speed4 = high - (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
     Control4Motor(&htim3, &speed);
+	xSemaphoreGive(xTCPSem);
     vTaskDelay(pdMS_TO_TICKS(1));
-  }
-}
-
-void NRF_Task(void *argument)
-{
-  RX_Enhanced_ShockBurst_Config_RTOS(&nrf, 0xA2A2A2A2A2);
-  while (1)
-  {
-    if (RX_Communication(&nrf, spi_rx))
-    {
-    }
-    vTaskDelay(pdMS_TO_TICKS(10));
   }
 }
 
@@ -779,16 +822,179 @@ void ADC_Task(void *argument)
 
 void ZIGBEE_Task(void *argument)
 {
-  HAL_UART_Receive_IT(&huart2, uart2_rx, 5);
+
+
+  HAL_UART_Receive_IT(&huart2, uart2_rx, 16);
   while (1)
   {
     if (xSemaphoreTake(xUSART2Sem, portMAX_DELAY) == pdTRUE)
     {
-      HAL_UART_Receive_IT(&huart2, uart2_rx, 5);
+      HAL_UART_Receive_IT(&huart2, uart2_rx, 16);
     }
   }
 }
 
+void USB_UART_Task(void *argument)
+{
+	uint8_t uart1_rx[128];
+	uint8_t buffer;
+	HAL_UART_Receive_IT(&huart1, &buffer, 1);
+	static int i=0;
+	while(1)
+	{
+		if (xSemaphoreTake(xUSART1Sem, portMAX_DELAY) == pdTRUE)
+		{
+
+			if(buffer=='\n' || i==127)
+			{
+				i=0;
+				buffer=0;
+				int a=strlen((char*)uart1_rx);
+				for(int u=0;u<128;u++)
+				{
+					xQueueSend(xTCPMessage,uart1_rx+u,portMAX_DELAY);
+				}
+				for(int u=0;u<a;u++)
+				{
+					uart1_rx[u]=0;
+				}
+				goto reset;
+			}
+			memcpy(uart1_rx+i,&buffer,1);
+			i++;
+			reset:
+			HAL_UART_Receive_IT(&huart1, &buffer, 1);
+		}
+	}
+}
+
+void NEO7M_Task(void *argument)
+{
+
+	uint8_t i=0;
+	uint8_t a;
+	uint8_t uart6_rx[128];
+	uint8_t buffer;
+	uint8_t MessageID[6];
+	uint8_t NeededID[]="$GPRMC";
+	HAL_UART_Receive_IT(&huart6, &buffer, 1);
+	while (1)
+	{
+		if (xSemaphoreTake(xUSART6Sem, portMAX_DELAY) == pdTRUE)
+		{
+			if(buffer=='\n')
+			{
+				i=0;
+				a=strlen((char*)uart6_rx);
+				memcpy(MessageID,uart6_rx,6);
+				if(strcmp((char*)MessageID,(char*)NeededID))
+				{
+					for(int u=0;u<128;u++)
+					{
+						xQueueSend(xGPSQueue,MessageID+u,portMAX_DELAY);
+					}
+				}
+				for(int u=0;u<a;u++)
+				{
+					uart6_rx[u]=0;
+				}
+				goto Init_Interupt;
+			}
+			memcpy(uart6_rx+i,&buffer,1);
+			i++;
+Init_Interupt:
+			HAL_UART_Receive_IT(&huart6, &buffer, 1);
+
+		}
+	}
+
+}
+
+void GPS_DATA_Task(void *argument)
+{
+	while(1)
+	{
+
+	}
+}
+
+
+void TCP_Message_Handling_Task(void *argument)
+{
+	uint8_t TCP_Mess[128];
+	uint8_t *string=malloc(sizeof(char)*30);
+	while(1)
+	{
+		for(int i=0;i<128;i++)
+		{
+			if (xQueueReceive(xTCPMessage, TCP_Mess+i, portMAX_DELAY) == pdTRUE)
+			{
+
+			}
+		}
+		xSemaphoreTake(xTCPSem,portMAX_DELAY);
+		int count_string=0;
+		int track_string=0;
+		for(int i=1;i<128;i++)
+		{
+			if(TCP_Mess[i]!='/'&&TCP_Mess[i]!=0&&count_string<=7&&track_string<30)
+			{
+				string[track_string]=TCP_Mess[i];
+				track_string++;
+			}
+			else if((TCP_Mess[i]=='/'||TCP_Mess[i]==0)&&count_string<7&&track_string<30)
+			{
+				value[count_string]=atof((char*)string);
+				count_string++;
+				track_string=0;
+				memset(string,0,30);
+			}
+			else if(track_string>=30)
+			{
+				goto escape_function;
+			}
+			if (count_string>=7||TCP_Mess[i]==0)
+			{
+				break;
+			}
+
+
+
+		}
+		if(TCP_Mess[0]=='R')
+		{
+			AdjustPIDParams(&roll, value+1,value+2, value+3);
+			calculation.roll_reference=value[0];
+			AdjustPIDParams(&roll_rate, value+4, value+5, value+6);
+		}
+		else if(TCP_Mess[0]=='P')
+		{
+			AdjustPIDParams(&pitch, value+1,value+2, value+3);
+			calculation.picth_reference=value[0];
+			AdjustPIDParams(&pitch_rate, value+4, value+5, value+6);
+		}
+		else if(TCP_Mess[0]=='Y')
+		{
+			AdjustPIDParams(&yaw , value+1,value+2, value+3);
+			calculation.yaw_reference=value[0];
+			AdjustPIDParams(&yaw_rate, value+4, value+5, value+6);
+		}
+		else if(TCP_Mess[0]=='H')
+		{
+			if(value[0]>=6500)
+			{
+				high=6500;
+			}
+			else
+			{
+				high=(uint32_t)value[0];
+			}
+		}
+		escape_function:
+		xSemaphoreGive(xTCPSem);
+
+	}
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -798,7 +1004,7 @@ void ZIGBEE_Task(void *argument)
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const *argument)
+void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
@@ -811,13 +1017,13 @@ void StartDefaultTask(void const *argument)
 }
 
 /**
- * @brief  Period elapsed callback in non blocking mode
- * @note   This function is called  when TIM1 interrupt took place, inside
- * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
- * a global variable "uwTick" used as application time base.
- * @param  htim : TIM handle
- * @retval None
- */
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM1 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
@@ -833,9 +1039,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -847,14 +1053,14 @@ void Error_Handler(void)
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef USE_FULL_ASSERT
+#ifdef  USE_FULL_ASSERT
 /**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */

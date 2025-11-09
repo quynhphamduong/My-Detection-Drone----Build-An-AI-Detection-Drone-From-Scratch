@@ -42,8 +42,6 @@ typedef struct
 	float roll_rate_reference;
 	float yaw_rate_reference;
 
-	float high_reference;
-
 }Drone_Calculation_Typedef;
 
 void Calculate_Reference(Drone_Calculation_Typedef *dr,Drone_Control_Typedef *dc);

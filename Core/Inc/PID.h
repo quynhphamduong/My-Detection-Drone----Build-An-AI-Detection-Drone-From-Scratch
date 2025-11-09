@@ -94,7 +94,7 @@ typedef struct AdaptiveP AdaptivePControllers_t;
 
 void pidControllersInit(PIDControllers_Typedef* pid,float Kp,float Ki,float Kd,float to,float T,float upper_satuaration,float lower_satuaration);
 float pidUpdate(PIDControllers_Typedef* pid,float measurement,float input);
-void AdjustPIDParams(PIDControllers_Typedef* pid,float Kp,float Ki,float Kd);
+void AdjustPIDParams(PIDControllers_Typedef* pid,float *Kp,float *Ki,float *Kd);
 void AdaptivePControllersInit(AdaptivePControllers_t *self_tunning,float Lamda);
 float SelfTunningPUpdate(AdaptivePControllers_t *self_tunning,float measurement, float ref);
 #ifdef __cplusplus

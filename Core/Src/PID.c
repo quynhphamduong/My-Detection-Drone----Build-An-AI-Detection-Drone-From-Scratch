@@ -36,11 +36,11 @@ void pidControllersInit(PIDControllers_Typedef* pid,float Kp,float Ki,float Kd,f
 
 }
 
-void AdjustPIDParams(PIDControllers_Typedef* pid,float Kp,float Ki,float Kd)
+void AdjustPIDParams(PIDControllers_Typedef* pid,float *Kp,float *Ki,float *Kd)
 {
-	pid->Kp=Kp;
-	pid->Ki=Ki;
-	pid->Kd=Kd;
+	pid->Kp=*Kp;
+	pid->Ki=*Ki;
+	pid->Kd=*Kd;
 }
 
 float pidUpdate(PIDControllers_Typedef* pid,float measurement,float input)
@@ -187,6 +187,7 @@ float SelfTunningPUpdate(AdaptivePControllers_t *self_tunning,float measurement,
 		self_tunning->b2=self_tunning->b2 + self_tunning->L41*self_tunning->epsilon;
 
 		self_tunning->Kp=(-0.8794-self_tunning->a1-self_tunning->a2)/(self_tunning->b1+self_tunning->b2);
+		count=0;
 	}
 
 	self_tunning->uk=self_tunning->Kp*self_tunning->et;
