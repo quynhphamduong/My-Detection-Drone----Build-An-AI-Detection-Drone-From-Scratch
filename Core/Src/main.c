@@ -74,15 +74,17 @@ osThreadId defaultTaskHandle;
 uint8_t uart2_rx[16];
 uint32_t high;
 
+uint8_t buff_esc[128];
 
 #ifdef SIMULATION
 int pwm;
 #endif
 
 uint32_t adc_value;
+uint8_t buff_esc[128];
 
 float value[7];
-
+uint8_t TCP_Mess[128];
 Motor_speed_Typedef speed;
 PIDControllers_Typedef pitch;
 PIDControllers_Typedef pitch_rate;
@@ -733,7 +735,7 @@ static void MX_GPIO_Init(void)
 void ESC_Task(void *argument)
 {
 
-	bno055_vector_t euler, gyro;
+bno055_vector_t euler, gyro;
   float altitude;
 
 
@@ -772,6 +774,8 @@ void ESC_Task(void *argument)
     speed.speed3 = high + (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
     speed.speed4 = high - (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
     Control4Motor(&htim3, &speed);
+    sprintf((char*)buff_esc,"%f/%f/%f\n",euler.y,euler.z,euler.x);
+    HAL_UART_Transmit(&huart1, buff_esc, 128,10);
 	xSemaphoreGive(xTCPSem);
     vTaskDelay(pdMS_TO_TICKS(1));
   }
@@ -921,7 +925,7 @@ void GPS_DATA_Task(void *argument)
 
 void TCP_Message_Handling_Task(void *argument)
 {
-	uint8_t TCP_Mess[128];
+
 	uint8_t *string=malloc(sizeof(char)*30);
 	while(1)
 	{
@@ -989,6 +993,10 @@ void TCP_Message_Handling_Task(void *argument)
 			{
 				high=(uint32_t)value[0];
 			}
+		}
+		else if(TCP_Mess[0]=='C')
+		{
+			HAL_UART_Transmit(&huart1,(uint8_t*) "A", 1, 1);
 		}
 		escape_function:
 		xSemaphoreGive(xTCPSem);
