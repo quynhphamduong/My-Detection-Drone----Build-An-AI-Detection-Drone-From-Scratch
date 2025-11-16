@@ -53,13 +53,14 @@ int main()
     mq_unlink("/TCP_TO_SERIAL");
     fclose(fptr);
 }
-
+/*this thread waits for incoming tcp message and send to serial port*/
 void *serial_port_thread(void *argument)
 {
     char buffer[256];
     int count_fail = 0;
     int val_write;
     unsigned int priority = 0;
+    /*initialize serial port, if failed end hole program*/
 begin_serial_thread:
     if (count_fail > 5)
     {
@@ -84,9 +85,11 @@ begin_serial_thread:
     {
         printf("Connect to %s has success\n", serial_port_name);
     }
+
     read_serial_fdp.fd = serial_fd;
     read_serial_fdp.events = POLLIN;
 
+    /*if receive message from tcp socket, pass to serial port*/
     while (1)
     {
         if (mq_receive(tcp_to_serial_mq, buffer, MAX_QUEUE_MESS, &priority) == -1)
@@ -102,10 +105,12 @@ begin_serial_thread:
     return NULL;
 }
 
+/*this thread reads incoming tcp message and send to serial_port_thread*/
 void *tcp_thread(void *argument)
 {
     int ret = 0;
     char buffer[128];
+    /*create and tcp socket server*/
     create_TCP_IPv4_server(&server, PORT, &server_fd, &len);
     connect_fdp.fd = server_fd;
     connect_fdp.events = POLLIN;
@@ -115,6 +120,7 @@ void *tcp_thread(void *argument)
         ret = poll(&connect_fdp, 1, 100);
         if (ret > 0)
         {
+            /*wait for 1 tcp socket client*/
             if (accept_client_connection(&server, &server_fd, &client_fd, &len) == ERROR)
             {
                 printf("Connection to this client has failed\n");
@@ -135,6 +141,7 @@ void *tcp_thread(void *argument)
 
         while (1)
         {
+            /*wait for incomming tcp client messages*/
             ret = poll(&read_fdps, 1, 100);
             if (ret == 0)
             {
@@ -170,6 +177,7 @@ void *tcp_thread(void *argument)
     return NULL;
 }
 
+/*this thread receive serial messages and send to tcp socket*/
 void *serial_to_tcp_thread(void *argument)
 {
     int ret;
@@ -179,6 +187,8 @@ void *serial_to_tcp_thread(void *argument)
     int count = 0;
     while (1)
     {
+        /*wait for incomming serial messages*/
+        /*if there are incomming messages, send to tcp socket*/
         ret = poll(&read_serial_fdp, 1, 50);
         if (ret > 0 && (read_serial_fdp.revents & POLLIN))
         {
