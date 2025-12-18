@@ -41,6 +41,7 @@
 #define PWM_MIN 1000 // 1000 us
 #define PWM_MAX 2000 // 2000 us
 #define DEADZONE 50
+#define DEBUG 1
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -72,7 +73,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
 uint8_t uart2_rx[16];
-uint32_t high;
+uint32_t high[4];
 
 uint8_t buff_esc[128];
 
@@ -272,7 +273,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  xTaskCreate(ESC_Task, "ESC", 512, NULL, 1, &ESC_Handle);
+  xTaskCreate(ESC_Task, "ESC", 512, NULL, 2, &ESC_Handle);
   xTaskCreate(TCP_Message_Handling_Task,"TCP",512,NULL,1,&TCP_Handle);
   xTaskCreate(BNO_Task, "BNO", 256, NULL, 1, &BNO_Handle);
   xTaskCreate(BMP_Task, "BMP", 256, NULL, 1, &BMP_Handle);
@@ -734,7 +735,6 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void ESC_Task(void *argument)
 {
-
 bno055_vector_t euler, gyro;
   float altitude;
 
@@ -757,22 +757,44 @@ bno055_vector_t euler, gyro;
     {
     }
 
+    if(TCP_Mess[0]=='W')
+   		{
+   			roll.expected=roll.expected+0.1f;
+   		}
+   		else if(TCP_Mess[0]=='S')
+   		{
+   			yaw.expected=yaw.expected-0.1f;
+   		}
+   		else if(TCP_Mess[0]=='A')
+   		{
+   			yaw.expected=yaw.expected+0.1f;
+   		}
+   		else if(TCP_Mess[0]=='D')
+   		{
+   			roll.expected=roll.expected-0.1f;
+   		}
     xSemaphoreTake(xTCPSem,portMAX_DELAY);
-    pidUpdate(&pitch, euler.z, calculation.picth_reference);
+    pidUpdate(&pitch, euler.z, pitch.expected);
     calculation.picth_rate_reference = pitch.u;
     pidUpdate(&pitch_rate, gyro.z, calculation.picth_rate_reference);
-    pidUpdate(&roll, euler.y, calculation.roll_reference);
+    pidUpdate(&roll, euler.y,  roll.expected);
     calculation.roll_rate_reference=roll.u;
     pidUpdate(&roll_rate, gyro.y, calculation.roll_rate_reference);
-    pidUpdate(&yaw, euler.x, calculation.yaw_reference);
+    pidUpdate(&yaw, euler.x, yaw.expected);
     calculation.yaw_rate_reference = yaw.u;
     pidUpdate(&yaw_rate, gyro.x, calculation.yaw_rate_reference);
 
-
-    speed.speed1 = high - (uint32_t)pitch_rate.u + (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
-    speed.speed2 = high + (uint32_t)pitch_rate.u + (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
-    speed.speed3 = high + (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
-    speed.speed4 = high - (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
+#if DEBUG ==1
+    speed.speed1 = high[0] - (uint32_t)pitch_rate.u + (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
+    speed.speed2 = high[1] + (uint32_t)pitch_rate.u + (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
+    speed.speed3 = high[2] + (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u - (uint32_t)yaw_rate.u;
+    speed.speed4 = high[3] - (uint32_t)pitch_rate.u - (uint32_t)roll_rate.u + (uint32_t)yaw_rate.u;
+#else
+    speed.speed1 = 2000;
+	speed.speed2 = 2000;
+	speed.speed3 = 2000;
+	speed.speed4 = 2000;
+#endif
     Control4Motor(&htim3, &speed);
     sprintf((char*)buff_esc,"%f/%f/%f\n",euler.y,euler.z,euler.x);
     HAL_UART_Transmit(&huart1, buff_esc, 128,10);
@@ -961,9 +983,6 @@ void TCP_Message_Handling_Task(void *argument)
 			{
 				break;
 			}
-
-
-
 		}
 		if(TCP_Mess[0]=='R')
 		{
@@ -985,19 +1004,16 @@ void TCP_Message_Handling_Task(void *argument)
 		}
 		else if(TCP_Mess[0]=='H')
 		{
-			if(value[0]>=6500)
+			for(int i=0;i<4;i++)
 			{
-				high=6500;
-			}
-			else
-			{
-				high=(uint32_t)value[0];
+				high[i]=value[i];
 			}
 		}
 		else if(TCP_Mess[0]=='C')
 		{
 			HAL_UART_Transmit(&huart1,(uint8_t*) "A", 1, 1);
 		}
+
 		escape_function:
 		xSemaphoreGive(xTCPSem);
 
