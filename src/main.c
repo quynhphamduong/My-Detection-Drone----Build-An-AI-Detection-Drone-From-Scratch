@@ -46,7 +46,7 @@ int main()
     sleep(3);
     pthread_create(&t2, NULL, tcp_thread, NULL);
     pthread_create(&t3, NULL, serial_to_tcp_thread, NULL);
-    pthread_create(&t4, NULL, python_thread, NULL);
+    pthread_create(&t4, NULL, run_model, NULL);
 
     pthread_join(t1, NULL);
     pthread_detach(t2);
