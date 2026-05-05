@@ -8,7 +8,7 @@
 
 #define MAX_QUEUE_MESS 256
 
-pthread_t t1, t2, t3;
+pthread_t t1, t2, t3, t4;
 struct pollfd read_fdps;
 struct pollfd write_fdps;
 struct pollfd connect_fdp;
@@ -23,6 +23,7 @@ struct mq_attr attr;
 void *serial_to_tcp_thread(void *arg);
 void *serial_port_thread(void *argument);
 void *tcp_thread(void *argument);
+void *run_model(void *arg);
 
 int main()
 {
@@ -45,6 +46,7 @@ int main()
     sleep(3);
     pthread_create(&t2, NULL, tcp_thread, NULL);
     pthread_create(&t3, NULL, serial_to_tcp_thread, NULL);
+    pthread_create(&t4, NULL, python_thread, NULL);
 
     pthread_join(t1, NULL);
     pthread_detach(t2);
@@ -232,4 +234,27 @@ void *serial_to_tcp_thread(void *argument)
             memset(buffer, 0, 128);
         }
     }
+}
+
+void *run_model(void *arg)
+{
+    pid_t pid = fork();
+
+    if (pid == 0)
+    {
+        execlp("python3", "python3", "yolo_detect.py", NULL);
+        perror("execlp failed");
+        exit(1);
+    }
+    else if (pid > 0)
+    {
+        printf("Started Python YOLO process (PID = %d)\n", pid);
+        waitpid(pid, NULL, 0);
+    }
+    else
+    {
+        perror("fork failed");
+    }
+
+    return NULL;
 }
